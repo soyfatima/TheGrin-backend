@@ -22,9 +22,9 @@ export class Folder {
   @Column()
   category: string;
 
-  @Column('text')
+  @Column()
   content: string;
-
+  
   @ManyToOne(() => User, (user) => user.folders, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;
@@ -32,9 +32,10 @@ export class Folder {
   @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
   comments: Comment[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+  
+  @UpdateDateColumn({ type: 'timestamp' })
+updatedAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

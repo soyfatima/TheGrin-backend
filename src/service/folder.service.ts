@@ -12,28 +12,38 @@ import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import * as fs from 'fs';
-import { Admin } from 'src/admin.entity';
+import { User } from 'src/user.entity';
 
 @Injectable()
 export class FolderService {
   constructor(
     @InjectRepository(Folder)
     private folderRepository: Repository<Folder>,
-    @InjectRepository(Admin)
-    private adminRepository: Repository<Admin>,
-  ) {}
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) { }
 
   //create folder
-  async createFolder(folderData: Partial<Folder>): Promise<Folder> {
-    const folder = this.folderRepository.create(folderData);
+  async createFolder(userId: number, folderData: Partial<Folder>): Promise<Folder> {
+    const folder = this.folderRepository.create({
+      ...folderData,
+      user: { id: userId } // Ensure you link the folder to the user
+    });
+
     return await this.folderRepository.save(folder);
   }
 
+
   // fetch folders and folderdetails
-  async getAllFolders(): Promise<Folder[]> {
-    return await this.folderRepository.find();
+  async getFoldersByUser(userId:number): Promise<Folder[]> {
+    return await this.folderRepository.find({where :{user: {id:userId}}});
   }
 
+    // fetch folders and folderdetails
+    async getAllFolders(): Promise<Folder[]> {
+      return await this.folderRepository.find({ relations: ['user'] });
+    }
+  
   //update folderdetails
   async updateFolder(
     id: number,

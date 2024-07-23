@@ -16,92 +16,56 @@ export class CommentService {
   
   ) {}
 
-  // backend service
-  async addComment(
-    folderId: number,
-    userId: number,
-    content: string,
-  ): Promise<Comment> {
-    try {
-      // Find the logged-in user based on userId
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      if (!user) {
-        throw new Error('User not found');
-      }
+ 
+  async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
+    const user = await this.userRepository.findOne({where:{id:userId}});
+    const folder = await this.folderRepository.findOne({where:{id:folderId}});
 
-      // Fetch the folder based on folderId
-      const folder = await this.folderRepository.findOne({
-        where: { id: folderId },
-      });
-      if (!folder) {
-        throw new Error('Folder not found');
-      }
-
-      // Create a new comment
-      const newComment = new Comment();
-      newComment.content = content;
-      newComment.createdAt = new Date();
-      newComment.user = user;
-      newComment.folder = folder;
-
-      // Save the new comment
-      return await this.commentRepository.save(newComment);
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      throw error;
+    if (!user || !folder) {
+      throw new Error('User or Folder not found');
     }
+
+    const comment = new Comment();
+    comment.content = content;
+    comment.user = user;
+    comment.folder = folder;
+
+    return this.commentRepository.save(comment);
   }
+
 
   //fetch comments
   async getCommentsByFolderId(folderId: number): Promise<Comment[]> {
-    return await this.commentRepository.find({
-      where: { folder: { id: folderId } },
-      relations: ['user'],
-    });
-  }
-
-  // add reply to comment
-  async addReplyToComment(
-    commentId: number,
-    userId: number,
-    replyMessage: string,
-    replyCreateDate: Date,
-  ): Promise<Comment> {
     try {
-      // Find the comment based on commentId
-      const comment = await this.commentRepository.findOne({
-        where: { id: commentId },
+      const comments = await this.commentRepository.find({
+        where: { folder: { id: folderId } },
+        relations: ['user', 'replies', 'replies.user'],
+        order: { createdAt: 'ASC' }, // Optionally sort comments by creation date
       });
-      if (!comment) {
-        throw new Error('Comment not found');
-      }
-
-      // Find the user based on userId
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Create a new reply object
-      const newReply = {
-        user: user,
-        content: replyMessage,
-        createdAt: replyCreateDate,
-      };
-
-      // Add the reply to the comment
-      if (!comment.replies) {
-        comment.replies = [];
-      }
- //     comment.replies.push(newReply);
-
-      // Save the updated comment
-      return await this.commentRepository.save(comment);
+      return comments;
     } catch (error) {
-      console.error('Error adding reply to comment:', error);
-      throw error;
+      console.error('Error fetching comments:', error.message);
+      throw new Error('Failed to fetch comments');
     }
   }
+
+ 
+
+  async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
+    const parentComment = await this.commentRepository.findOne({ where: { id: commentId } });
+    if (!parentComment) {
+      throw new NotFoundException('Parent comment not found');
+    }
+    const reply = this.commentRepository.create({ 
+      content, 
+      user: { id: userId }, 
+      parent: parentComment,
+      folder: parentComment.folder  // Ensure the folder is also set correctly
+    });
+    return this.commentRepository.save(reply);
+  }
+
+
 
   //   async addReplyToComment(commentId: number, userId: number, replyMessage: string, replyCreateDate: Date): Promise<Comment> {
   //     try {

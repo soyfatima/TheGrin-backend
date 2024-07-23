@@ -7,6 +7,8 @@ import {
   UseGuards,
   Req,
   BadRequestException,
+  ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { CommentService } from 'src/service/comment.service';
 import { Comment } from 'src/comment.entity';
@@ -27,7 +29,7 @@ export class CommentController {
   @Post(':folderId')
   async addComment(
     @Param('folderId') folderId: number,
-    @Body() body: { content: string },
+    @Body() body: Partial<Comment>,
     @Req() req: any,
   ): Promise<Comment> {
     try {
@@ -47,33 +49,19 @@ export class CommentController {
 
   //fetch comments
   @Get('/folder/:folderId')
-  async getCommentsByFolderId(@Param('folderId') folderId: number) {
+  async getCommentsByFolderId(@Param('folderId') folderId: number): Promise<Comment[]> {
     return await this.commentService.getCommentsByFolderId(folderId);
   }
 
   // Add reply to a comment
-
   @UseGuards(JwtAuthGuard)
-  @Post('reply/:commentId')
-  async addReplyToComment(
-    @Param('commentId') commentId: number,
-    @Body() body: { content: string; replyCreateDate: Date },
-    @Req() req: any,
-  ): Promise<any> {
-    try {
-      const userId = req.user.userId;
-
-      // Call your service method to add a reply to the comment
-      const reply = await this.commentService.addReplyToComment(
-        commentId,
-        userId,
-        body.content,
-        body.replyCreateDate,
-      );
-      return reply;
-    } catch (error) {
-      console.error('Error adding reply:', error.message);
-      throw new BadRequestException('Failed to add reply');
-    }
+  @Post(':commentId/reply')
+  async addReply(
+    @Req() req:any,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Body('content') content: string,
+  ): Promise<Comment> {
+    const userId = (req.user as { userId: number }).userId;
+    return this.commentService.addReply(commentId, content, userId);
   }
 }

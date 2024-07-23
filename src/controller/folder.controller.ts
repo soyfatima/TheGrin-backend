@@ -16,6 +16,7 @@ import {
   HttpStatus,
   Put,
   Delete,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 //import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -30,36 +31,56 @@ import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 export class FolderController {
   constructor(private FolderService: FolderService) {}
 
-  //create folder
-
+  //create folder 
   @UseGuards(JwtAuthGuard)
   @Post('create')
-  //@UseInterceptors(FileInterceptor('uploadedFile'))
   async createFolder(
-  //  @UploadedFile() file,
+    @Req() req,
     @Body() folderData: Partial<Folder>,
   ) {
     try {
-      const folder = await this.FolderService.createFolder({
-        ...folderData,
-     //   uploadedFile: file.filename,
-      });
+      const userId = (req.user as { userId: number }).userId;
+      console.log('Request User:', req.user); // Log request user
+      console.log('Folder Data:', folderData); // Log folder data
+  
+      if (!folderData.content) {
+        throw new Error('Content is required');
+      }
+  
+      const folder = await this.FolderService.createFolder(userId, folderData);
       return folder;
     } catch (error) {
+      console.error('Error during folder creation:', error.message); // Log error message
       throw new HttpException(
         'Failed to create folder',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-
+  
   //fetch folder and folderdetails
 
-  @Get('folderdetails')
-  async getAllFolders(): Promise<Folder[]> {
-    return await this.FolderService.getAllFolders();
+  @UseGuards(JwtAuthGuard)
+  @Get('user-folders')
+  async getUserFolders(@Req() req): Promise<Folder[]> {
+    try {
+      const userId = (req.user as { userId: number }).userId;
+      return await this.FolderService.getFoldersByUser(userId);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch folders',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
+    //fetch folder and folderdetails
+
+    @Get('folderdetails')
+    async getAllFolders(): Promise<Folder[]> {
+      return await this.FolderService.getAllFolders();
+    }
+  
   //update folderdetails
 
   @UseGuards(JwtAuthGuard)
