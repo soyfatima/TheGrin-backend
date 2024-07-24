@@ -9,6 +9,9 @@ import {
   BadRequestException,
   ParseIntPipe,
   NotFoundException,
+  InternalServerErrorException,
+  Put,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CommentService } from 'src/service/comment.service';
 import { Comment } from 'src/comment.entity';
@@ -64,4 +67,28 @@ export class CommentController {
     const userId = (req.user as { userId: number }).userId;
     return this.commentService.addReply(commentId, content, userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+@Put(':id')
+async updateComment(
+  @Req() req: any,
+  @Param('id') id: number,
+  @Body('folderId') folderId: number,
+  @Body('content') content: string,
+) {
+  const userId = (req.user as { userId: number }).userId;
+  return this.commentService.updateComment(userId, id, folderId, content);
+}
+
+@UseGuards(JwtAuthGuard)
+@Put('replies/:id')
+async updateReply(
+  @Req() req: any,
+  @Param('id') id: number,
+  @Body('folderId') folderId: number,
+  @Body('content') content: string,
+) {
+  const userId = (req.user as { userId: number }).userId;
+  return this.commentService.updateReply(userId, id, folderId, content);
+}
 }

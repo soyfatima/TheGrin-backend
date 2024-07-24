@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from 'src/comment.entity';
@@ -65,64 +65,44 @@ export class CommentService {
     return this.commentRepository.save(reply);
   }
 
+  
+  async updateComment(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
+    const comment = await this.commentRepository.findOne({
+      where: { id: id},
+      relations: ['user', 'folder', 'parent', 'replies'],
+    });
+  
+    if (!comment) {
+      throw new NotFoundException('Comment not found in the specified folder');
+    }
+  
+    if (comment.user.id !== userId) {
+      throw new ForbiddenException('You are not allowed to edit this comment');
+    }
+  
+    comment.content = content;
+    await this.commentRepository.save(comment);
+    return comment;
+  }
+  
 
-
-  //   async addReplyToComment(commentId: number, userId: number, replyMessage: string, replyCreateDate: Date): Promise<Comment> {
-  //     try {
-  //         const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ["user"] });
-  //         if (!comment) {
-  //             throw new Error('Comment not found');
-  //         }
-
-  //         const user = await this.userRepository.findOne({ where: { id: userId } });
-  //         if (!user) {
-  //             throw new Error('User not found');
-  //         }
-
-  //         const taggedUsers = this.extractTaggedUsers(replyMessage); // Extract tagged users from the reply message
-
-  //         // Create a new reply object
-  //         const newReply = {
-  //             user: user,
-  //             content: replyMessage,
-  //             createdAt: replyCreateDate
-  //         };
-
-  //         // Add the reply to the comment
-  //         if (!comment.replies) {
-  //             comment.replies = [];
-  //         }
-  //         comment.replies.push(newReply);
-
-  //         // Save the updated comment
-  //         await this.commentRepository.save(comment);
-
-  //         // Send notifications to tagged users
-  //         await this.sendNotificationsToTaggedUsers(taggedUsers, user, comment);
-
-  //         return comment;
-  //     } catch (error) {
-  //         console.error('Error adding reply to comment:', error);
-  //         throw error;
-  //     }
-  // }
-
-  // private async sendNotificationsToTaggedUsers(taggedUsers: User[], sender: User, comment: Comment): Promise<void> {
-  //     for (const taggedUser of taggedUsers) {
-  //         const notification = new Notification();
-  //         notification.content = `You have been mentioned in a comment by ${sender.username}`;
-  //         notification.type = 'mention';
-  //         notification.sender = sender;
-  //         notification.receiver = taggedUser;
-  //         await this.notificationRepository.save(notification);
-  //     }
-  // }
-
-  // private extractTaggedUsers(replyMessage: string): User[] {
-  //     // Logic to extract tagged users from the reply message
-  //     // You can use regular expressions or any other method to identify tagged users
-  //     // For example, if tagged users are prefixed with @username, you can extract them using regex
-  //     // This is just a placeholder, you need to implement your own logic here
-  //     return [];
-  // }
+  async updateReply(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
+    const reply = await this.commentRepository.findOne({
+      where: { id: id },
+      relations: ['user', 'folder', 'parent', 'replies'],
+    });
+  
+    if (!reply) {
+      throw new NotFoundException('Reply not found in the specified folder');
+    }
+  
+    if (reply.user.id !== userId) {
+      throw new ForbiddenException('You are not allowed to edit this reply');
+    }
+  
+    reply.content = content;
+    await this.commentRepository.save(reply);
+    return reply;
+  }
+  
 }

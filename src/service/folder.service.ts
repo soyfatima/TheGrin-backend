@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -27,7 +28,8 @@ export class FolderService {
   async createFolder(userId: number, folderData: Partial<Folder>): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...folderData,
-      user: { id: userId } // Ensure you link the folder to the user
+      user: { id: userId } 
+      
     });
 
     return await this.folderRepository.save(folder);
@@ -35,27 +37,44 @@ export class FolderService {
 
 
   // fetch folders and folderdetails
-  async getFoldersByUser(userId:number): Promise<Folder[]> {
-    return await this.folderRepository.find({where :{user: {id:userId}}});
-  }
+  // async getFoldersByUser(userId:number): Promise<Folder[]> {
+  //   return await this.folderRepository.find({where :{user: {id:userId}}});
+  // }
+
 
     // fetch folders and folderdetails
     async getAllFolders(): Promise<Folder[]> {
       return await this.folderRepository.find({ relations: ['user'] });
     }
   
-  //update folderdetails
-  async updateFolder(
-    id: number,
-    updatedFolderData: Partial<Folder>,
-  ): Promise<Folder> {
-    const folder = await this.folderRepository.findOne({ where: { id } });
-    if (!folder) {
-      throw new NotFoundException('Folder not found');
+
+
+    async updateFolderContent(userId: number, id: number, content: string): Promise<Folder> {
+      // Fetch the folder including its associated user
+      const folder = await this.folderRepository.findOne({
+        where: { id: id },
+        relations: ['user'],
+      });
+      
+      // Handle case where folder is not found
+      if (!folder) {
+        throw new NotFoundException('Folder not found');
+      }
+      
+      // Check if the user making the request is the owner of the folder
+      if (folder.user.id !== userId) {
+        throw new ForbiddenException('You are not allowed to edit this folder');
+      }
+      
+      // Update the folder content
+      folder.content = content;
+      await this.folderRepository.save(folder);
+      return folder;
     }
-    Object.assign(folder, updatedFolderData);
-    return await this.folderRepository.save(folder);
-  }
+  
+
+
+
 
   //delete folder
   async deleteFolder(id: number): Promise<void> {

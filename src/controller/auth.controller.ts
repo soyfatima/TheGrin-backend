@@ -129,7 +129,8 @@ export class AuthController {
   
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
-  
+      console.log('access token', accessToken),
+      console.log('refresh token',refreshToken)
       // Set tokens as cookies in the response
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
@@ -174,6 +175,7 @@ export class AuthController {
   ): Promise<{ valid: boolean; userId: number | null }> {
     const { accessToken } = body;
     const isValid = await this.authService.verifyToken(accessToken);
+    console.log(this.verifyToken, 'verify token')
     return { valid: isValid !== null, userId: isValid };
   }
 

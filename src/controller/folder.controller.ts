@@ -29,7 +29,7 @@ import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 
 @Controller('folders')
 export class FolderController {
-  constructor(private FolderService: FolderService) {}
+  constructor(private FolderService: FolderService) { }
 
   //create folder 
   @UseGuards(JwtAuthGuard)
@@ -40,13 +40,10 @@ export class FolderController {
   ) {
     try {
       const userId = (req.user as { userId: number }).userId;
-      console.log('Request User:', req.user); // Log request user
-      console.log('Folder Data:', folderData); // Log folder data
-  
       if (!folderData.content) {
         throw new Error('Content is required');
       }
-  
+
       const folder = await this.FolderService.createFolder(userId, folderData);
       return folder;
     } catch (error) {
@@ -57,40 +54,43 @@ export class FolderController {
       );
     }
   }
-  
+
   //fetch folder and folderdetails
+  // @UseGuards(JwtAuthGuard)
+  // @Get('user-folders')
+  // async getUserFolders(@Req() req): Promise<Folder[]> {
+  //   try {
+  //     const userId = (req.user as { userId: number }).userId;
+  //     return await this.FolderService.getFoldersByUser(userId);
+  //   } catch (error) {
+  //     throw new HttpException(
+  //       'Failed to fetch folders',
+  //       HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('user-folders')
-  async getUserFolders(@Req() req): Promise<Folder[]> {
-    try {
-      const userId = (req.user as { userId: number }).userId;
-      return await this.FolderService.getFoldersByUser(userId);
-    } catch (error) {
-      throw new HttpException(
-        'Failed to fetch folders',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  //fetch folder and folderdetails
+  @Get('folderdetails')
+  async getAllFolders(): Promise<Folder[]> {
+    return await this.FolderService.getAllFolders();
   }
-
-    //fetch folder and folderdetails
-
-    @Get('folderdetails')
-    async getAllFolders(): Promise<Folder[]> {
-      return await this.FolderService.getAllFolders();
-    }
-  
-  //update folderdetails
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  async updateFolder(
+  async updateFolderContent(
+    @Req() req: any,
     @Param('id') id: number,
-    @Body() updatedFolderData: Partial<Folder>,
-  ): Promise<Folder> {
-    return await this.FolderService.updateFolder(id, updatedFolderData);
+    @Body('content') content: string,
+  ) {
+    const userId = (req.user as { userId: number }).userId;
+    return this.FolderService.updateFolderContent(userId, id, content);
   }
+
+
+
+
+
 
   //delete folder
 
