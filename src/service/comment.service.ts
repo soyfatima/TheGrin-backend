@@ -105,4 +105,10 @@ export class CommentService {
     return reply;
   }
   
+  getUserComment(id:number): Promise<Comment[]>{
+    return this.commentRepository.find({where:{user:{id:id}},
+    relations:['folder']
+    })
+  }
+
 }

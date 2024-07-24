@@ -91,4 +91,10 @@ async updateReply(
   const userId = (req.user as { userId: number }).userId;
   return this.commentService.updateReply(userId, id, folderId, content);
 }
+
+@Get('user-comment/:id')
+async getUserComment(
+  @Param('id') id:number):Promise<Comment[]>{
+    return this.commentService.getUserComment(id)
+  }
 }
