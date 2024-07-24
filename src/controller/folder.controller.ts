@@ -56,19 +56,12 @@ export class FolderController {
   }
 
   //fetch folder and folderdetails
-  // @UseGuards(JwtAuthGuard)
-  // @Get('user-folders')
-  // async getUserFolders(@Req() req): Promise<Folder[]> {
-  //   try {
-  //     const userId = (req.user as { userId: number }).userId;
-  //     return await this.FolderService.getFoldersByUser(userId);
-  //   } catch (error) {
-  //     throw new HttpException(
-  //       'Failed to fetch folders',
-  //       HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
-  //   }
-  // }
+  //@UseGuards(JwtAuthGuard)
+  @Get('user-folders/:id')
+  async getUserFolders(@Param('id')id:number): Promise<Folder[]> {
+      return await this.FolderService.getUserFolders(id);
+    }
+
 
   //fetch folder and folderdetails
   @Get('folderdetails')

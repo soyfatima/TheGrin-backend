@@ -38,9 +38,9 @@ export class FolderService {
 
 
   // fetch folders and folderdetails
-  // async getFoldersByUser(userId:number): Promise<Folder[]> {
-  //   return await this.folderRepository.find({where :{user: {id:userId}}});
-  // }
+  async getUserFolders(id:number): Promise<Folder[]> {
+    return await this.folderRepository.find({where :{user: {id:id}}});
+  }
 
 
   // fetch folders and folderdetails
@@ -48,7 +48,9 @@ export class FolderService {
     return await this.folderRepository.find({ relations: ['user'] });
   }
 
-
+// async getUserFolder():Promise<Folder[]>{
+//   return await this.folderRepository.find({relations:['user']})
+// }
   //edit content
   async updateFolderContent(userId: number, id: number, content: string): Promise<Folder> {
     // Fetch the folder including its associated user
