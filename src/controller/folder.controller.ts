@@ -87,11 +87,6 @@ export class FolderController {
     return this.FolderService.updateFolderContent(userId, id, content);
   }
 
-
-
-
-
-
   //delete folder
 
   @UseGuards(JwtAuthGuard)

@@ -22,14 +22,15 @@ export class FolderService {
     private folderRepository: Repository<Folder>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+  
   ) { }
 
   //create folder
   async createFolder(userId: number, folderData: Partial<Folder>): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...folderData,
-      user: { id: userId } 
-      
+      user: { id: userId }
+
     });
 
     return await this.folderRepository.save(folder);
@@ -42,38 +43,35 @@ export class FolderService {
   // }
 
 
-    // fetch folders and folderdetails
-    async getAllFolders(): Promise<Folder[]> {
-      return await this.folderRepository.find({ relations: ['user'] });
+  // fetch folders and folderdetails
+  async getAllFolders(): Promise<Folder[]> {
+    return await this.folderRepository.find({ relations: ['user'] });
+  }
+
+
+  //edit content
+  async updateFolderContent(userId: number, id: number, content: string): Promise<Folder> {
+    // Fetch the folder including its associated user
+    const folder = await this.folderRepository.findOne({
+      where: { id: id },
+      relations: ['user'],
+    });
+
+    if (!folder) {
+      throw new NotFoundException('Folder not found');
     }
-  
 
-
-    async updateFolderContent(userId: number, id: number, content: string): Promise<Folder> {
-      // Fetch the folder including its associated user
-      const folder = await this.folderRepository.findOne({
-        where: { id: id },
-        relations: ['user'],
-      });
-      
-      // Handle case where folder is not found
-      if (!folder) {
-        throw new NotFoundException('Folder not found');
-      }
-      
-      // Check if the user making the request is the owner of the folder
-      if (folder.user.id !== userId) {
-        throw new ForbiddenException('You are not allowed to edit this folder');
-      }
-      
-      // Update the folder content
-      folder.content = content;
-      await this.folderRepository.save(folder);
-      return folder;
+    if (folder.user.id !== userId) {
+      throw new ForbiddenException('You are not allowed to edit this folder');
     }
-  
+
+    folder.content = content;
+    await this.folderRepository.save(folder);
+    return folder;
+  }
 
 
+  //get all folder number of comment
 
 
   //delete folder
