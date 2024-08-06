@@ -14,7 +14,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import { User } from 'src/user.entity';
+import { Comment
 
+ } from 'src/comment.entity';
 @Injectable()
 export class FolderService {
   constructor(
@@ -22,7 +24,8 @@ export class FolderService {
     private folderRepository: Repository<Folder>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  
+    @InjectRepository(Comment)
+    private commentRepository: Repository<Comment>,
   ) { }
 
   //create folder
@@ -38,10 +41,27 @@ export class FolderService {
 
 
   // fetch folders and folderdetails
-  async getUserFolders(id:number): Promise<Folder[]> {
-    return await this.folderRepository.find({where :{user: {id:id}}});
-  }
+  // async getUserFolders(id:number): Promise<Folder[]> {
+  //   return await this.folderRepository.find({where :{user: {id:id}}});
+  // }
 
+  async getUserFolders(id: number, userId:number): Promise<any[]> {
+    const folders = await this.folderRepository.find({ where: { user: { id:id } },
+    relations:['user']
+    });
+    return Promise.all(folders.map(async (folder) => {
+      const commentCount = await this.commentRepository
+        .createQueryBuilder('comment')
+        .where('comment.folderId = :folderId', { folderId: folder.id })
+        .getCount();
+      
+      return {
+        ...folder,
+        commentCount, 
+      };
+    }));
+  }
+  
 
   // fetch folders and folderdetails
   async getAllFolders(): Promise<Folder[]> {
@@ -76,11 +96,19 @@ export class FolderService {
   //get all folder number of comment
 
 
-  //delete folder
-  async deleteFolder(id: number): Promise<void> {
-    await this.folderRepository.delete(id);
+  async deleteFolder(id: number, folderId: number): Promise<void> {
+    // Ensure the folder belongs to the user
+    const folder = await this.folderRepository.findOne({
+      where: { id: folderId, user: { id: id } },
+    });
+  
+    if (!folder) {
+      throw new Error('Folder not found or you do not have permission to delete this folder');
+    }
+  
+    await this.folderRepository.remove(folder); // Use remove to ensure proper entity deletion
   }
-
+  
   //get folderdetails by ID
   async getFolderDetailsById(id: number): Promise<Folder> {
     return await this.folderRepository.findOne({ where: { id } });

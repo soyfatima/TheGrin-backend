@@ -25,6 +25,10 @@ export class Folder {
   @Column()
   content: string;
   
+  @Column({ nullable: true })
+  uploadedFile: string;
+
+  
   @ManyToOne(() => User, (user) => user.folders, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;

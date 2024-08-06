@@ -40,6 +40,7 @@ async function bootstrap() {
   // Set up logger configuration
   app.useLogger(new Logger());
   app.use('/blog-backend/uploads', express.static('uploads'));
+  app.use('/blog-backend/userFile', express.static('userFile'));
 
   await app.listen(3000);
 }

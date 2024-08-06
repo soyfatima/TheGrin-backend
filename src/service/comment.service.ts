@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
@@ -13,13 +13,13 @@ export class CommentService {
     private userRepository: Repository<User>,
     @InjectRepository(Folder)
     private folderRepository: Repository<Folder>,
-  
-  ) {}
 
- 
+  ) { }
+
+
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
-    const user = await this.userRepository.findOne({where:{id:userId}});
-    const folder = await this.folderRepository.findOne({where:{id:folderId}});
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const folder = await this.folderRepository.findOne({ where: { id: folderId } });
 
     if (!user || !folder) {
       throw new Error('User or Folder not found');
@@ -49,40 +49,72 @@ export class CommentService {
     }
   }
 
- 
+
 
   async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
     const parentComment = await this.commentRepository.findOne({ where: { id: commentId } });
     if (!parentComment) {
       throw new NotFoundException('Parent comment not found');
     }
-    const reply = this.commentRepository.create({ 
-      content, 
-      user: { id: userId }, 
+
+    // Extract mentioned username if it exists
+    const mentionMatch = content.match(/@(\w+)/);
+    let mentionedUser = null;
+
+    if (mentionMatch) {
+      const mentionedUsername = mentionMatch[1];
+      mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
+      if (!mentionedUser) {
+        // Optionally handle the case where the mentioned user does not exist
+        console.warn(`Mentioned user ${mentionedUsername} not found.`);
+      }
+    }
+
+    const reply = this.commentRepository.create({
+      content,
+      user: { id: userId },
       parent: parentComment,
       folder: parentComment.folder  // Ensure the folder is also set correctly
     });
     return this.commentRepository.save(reply);
   }
 
-  
+
   async updateComment(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
-      where: { id: id},
+      where: { id: id },
       relations: ['user', 'folder', 'parent', 'replies'],
     });
-  
+
     if (!comment) {
       throw new NotFoundException('Comment not found in the specified folder');
     }
-  
+
     if (comment.user.id !== userId) {
       throw new ForbiddenException('You are not allowed to edit this comment');
     }
-  
+
     comment.content = content;
     await this.commentRepository.save(comment);
     return comment;
+  }
+
+ 
+  async deleteComment(commentId: number, userId: number): Promise<void> {
+    const comment = await this.commentRepository.findOne({
+      where: { id: commentId },
+      relations:['user', 'folder']
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    if (comment.user.id !== userId) {
+      throw new ForbiddenException('You do not have permission to delete this comment');
+    }
+
+    await this.commentRepository.remove(comment);
   }
   
 
@@ -91,24 +123,52 @@ export class CommentService {
       where: { id: id },
       relations: ['user', 'folder', 'parent', 'replies'],
     });
-  
+
     if (!reply) {
       throw new NotFoundException('Reply not found in the specified folder');
     }
-  
+
     if (reply.user.id !== userId) {
       throw new ForbiddenException('You are not allowed to edit this reply');
     }
-  
+
     reply.content = content;
     await this.commentRepository.save(reply);
     return reply;
   }
-  
-  getUserComment(id:number): Promise<Comment[]>{
-    return this.commentRepository.find({where:{user:{id:id}},
-    relations:['folder']
+
+  async deleteReply(replyId: number, userId: number): Promise<void> {
+    const reply = await this.commentRepository.findOne({
+      where: { id: replyId },
+      relations: ['user', 'parent'],
+    });
+
+    if (!reply) {
+      throw new NotFoundException('Reply not found');
+    }
+
+    if (reply.user.id !== userId) {
+      throw new ForbiddenException('You do not have permission to delete this reply');
+    }
+
+    await this.commentRepository.remove(reply);
+  }
+
+
+  getUserComment(id: number): Promise<Comment[]> {
+    return this.commentRepository.find({
+      where: { user: { id: id } },
+      relations: ['folder']
     })
+  }
+
+
+
+  async findUsersByPrefix(prefix: string): Promise<User[]> {
+    const users = await this.userRepository.find({
+      where: { username: Like(`${prefix}%`) }
+    });
+    return users;
   }
 
 }

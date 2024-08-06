@@ -14,6 +14,8 @@ import {
   Delete,
   Headers,
   BadRequestException,
+  Put,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -38,6 +40,7 @@ export class userSignupDto {
   username: string;
   password: string;
   email: string;
+  gender:string
 }
 
 @Controller('auth')
@@ -73,8 +76,8 @@ export class AuthController {
     const accessToken = this.authService.generateAccessToken(user);
     const refreshToken = this.authService.generateRefreshToken(user);
     // Set tokens as cookies in the response
-    console.log('access token', accessToken),
-    console.log('refresh token',refreshToken)
+    //console.log('access token', accessToken),
+    //console.log('refresh token',refreshToken)
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: false,
@@ -95,14 +98,15 @@ export class AuthController {
     @Body() userSignupDto: userSignupDto,
     @Res() res: Response,
   ): Promise<void> {
-    const { email, username, password } = userSignupDto;
+    const { email, username, password,gender } = userSignupDto;
     try {
       const accessToken = await this.authService.userSignup(
         email,
         username,
         password,
+        gender
       );
-      const user = await this.authService.getUserByEmail(email); // Méthode hypothétique pour obtenir l'utilisateur par e-mail
+      const user = await this.authService.getUserByEmail(email);
       await this.cartService.createCartForUser(user.id);
 
       res.cookie('accessToken', accessToken, {
@@ -129,8 +133,8 @@ export class AuthController {
   
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
-      console.log('access token', accessToken),
-      console.log('refresh token',refreshToken)
+      //console.log('access token', accessToken),
+      //console.log('refresh token',refreshToken)
       // Set tokens as cookies in the response
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
@@ -175,7 +179,7 @@ export class AuthController {
   ): Promise<{ valid: boolean; userId: number | null }> {
     const { accessToken } = body;
     const isValid = await this.authService.verifyToken(accessToken);
-    console.log(this.verifyToken, 'verify token')
+    //console.log(this.verifyToken, 'verify token')
     return { valid: isValid !== null, userId: isValid };
   }
 
@@ -194,4 +198,22 @@ export class AuthController {
       res.status(400).send({ message: error.message });
     }
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Put(':id/update')
+  @UseInterceptors(FileInterceptor('uploadedFile', multerOptions))
+  async updateUserInfo(
+    @UploadedFile() file,
+    @Req() req,
+    @Param('id', ParseIntPipe) userId: number,
+    @Body('username') username?: string,
+  ) {
+    const id = (req.user as { userId: number }).userId;
+    if (id !== userId) {
+      throw new Error('Unauthorized');
+    }
+    const uploadedFile = file ? file.filename : null;
+    return this.authService.updateUserInfo(userId, username, uploadedFile);
+  }
+  
 }

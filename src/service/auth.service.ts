@@ -15,6 +15,7 @@ import { jwtConfig } from 'src/jwtGuard/config';
 import { User } from 'src/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { randomBytes } from 'crypto';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -85,7 +86,7 @@ export class AuthService {
   }
 
   //backend service
-  async userSignup(email: string, username: string, password: string): Promise<string> {
+  async userSignup(email: string, username: string, password: string, gender:string): Promise<string> {
     try {
       // Vérifie si l'e-mail est déjà utilisé
       const existingEmail = await this.userRepository.findOne({
@@ -114,8 +115,13 @@ export class AuthService {
         throw new BadRequestException('Username already exists');
       }
 
+      // Ensure gender is provided if required
+    if (!gender) {
+      throw new BadRequestException('Please select a gender');
+    }
+
       // Crée un nouvel utilisateur avec l'e-mail, le nom d'utilisateur et le mot de passe
-      const newUser = this.userRepository.create({ email, username, password });
+      const newUser = this.userRepository.create({ email, username, password, gender });
       await newUser.hashPassword();
       const user = await this.userRepository.save(newUser);
 
@@ -193,7 +199,7 @@ export class AuthService {
              <p><strong>${resetCode}</strong></p>`,
         //     from: '"thltechnologies" <no-reply@thltechserveur.com>',
       });
-      console.log('Email sent successfully');
+      //console.log('Email sent successfully');
     } catch (error) {
       console.error('Error sending email:', error);
     }
@@ -217,4 +223,23 @@ export class AuthService {
     await this.userRepository.save(user);
   }
 
+  async updateUserInfo(userId: number, username?: string, uploadedFile?: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+  
+    if (!user) {
+      throw new Error('User not found');
+    }
+  
+    if (username) {
+      user.username = username;
+    }
+  
+    if (uploadedFile) {
+      user.uploadedFile = uploadedFile;
+    }
+  
+    await this.userRepository.save(user);
+    return user;
+  }
+  
 }

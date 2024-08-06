@@ -30,6 +30,7 @@ import { CartService } from './service/cart.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter'; // Import HandlebarsAdapter
 import { MailerOptions, TransportType } from '@nestjs-modules/mailer/dist/interfaces/mailer-options.interface';
+import { folderFileOptions } from './fileOption';
 
 @Module({
   imports: [
@@ -45,6 +46,8 @@ import { MailerOptions, TransportType } from '@nestjs-modules/mailer/dist/interf
     }),
     
     MulterModule.register(multerOptions),
+    MulterModule.register(folderFileOptions),
+
     TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order]),
     JwtModule.register({
       secret: jwtConfig.secret,
