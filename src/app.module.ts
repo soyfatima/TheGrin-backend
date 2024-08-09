@@ -31,6 +31,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter'; // Import HandlebarsAdapter
 import { MailerOptions, TransportType } from '@nestjs-modules/mailer/dist/interfaces/mailer-options.interface';
 import { folderFileOptions } from './fileOption';
+import { NotificationController } from './controller/notification.controller';
+import { NotificationService } from './service/notification.service';
+import { Notification } from './notif.entity';
 
 @Module({
   imports: [
@@ -41,14 +44,14 @@ import { folderFileOptions } from './fileOption';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification],
       synchronize: true,
     }),
     
     MulterModule.register(multerOptions),
     MulterModule.register(folderFileOptions),
 
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order]),
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15mn' },
@@ -80,6 +83,7 @@ import { folderFileOptions } from './fileOption';
     ProductController,
     OrderController,
     CartController,
+    NotificationController
   ],
   providers: [
     AppService,
@@ -89,7 +93,8 @@ import { folderFileOptions } from './fileOption';
     CommentService,
     ProductService,
     OrderService,
-    CartService
+    CartService,
+    NotificationService
   ],
 })
 export class AppModule { }

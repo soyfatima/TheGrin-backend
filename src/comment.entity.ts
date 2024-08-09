@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Folder } from './folder.entity';
-
+import { Notification } from './notif.entity';
 @Entity({ name: 'comments' })
 export class Comment {
   @PrimaryGeneratedColumn()
@@ -33,6 +33,9 @@ export class Comment {
 
   @OneToMany(() => Comment, (comment) => comment.parent, { cascade: true })
   replies: Comment[];
+
+  @OneToMany(() => Notification, (notification) => notification.comment, { cascade: true })
+  notifications: Notification[];
 
   @CreateDateColumn()
   createdAt: Date;

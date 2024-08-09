@@ -4,6 +4,8 @@ import { Like, Repository } from 'typeorm';
 import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
+import { NotificationService } from './notification.service';
+
 @Injectable()
 export class CommentService {
   constructor(
@@ -13,25 +15,57 @@ export class CommentService {
     private userRepository: Repository<User>,
     @InjectRepository(Folder)
     private folderRepository: Repository<Folder>,
+    private notificationService: NotificationService,
+
 
   ) { }
 
 
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    const folder = await this.folderRepository.findOne({ where: { id: folderId } });
-
-    if (!user || !folder) {
-      throw new Error('User or Folder not found');
+    try {
+      // Fetch user and folder, including the user relation in the folder
+      const user = await this.userRepository.findOne({ where: { id: userId } });
+      const folder = await this.folderRepository.findOne({ 
+        where: { id: folderId },
+        relations: ['user'],  // Ensure the 'user' relation is loaded
+      });
+  
+      if (!user || !folder) {
+        console.error('User or Folder not found', { userId, folderId });
+        throw new Error('User or Folder not found');
+      }
+  
+      // Log fetched user and folder
+      console.log('Fetched User:', user);
+      console.log('Fetched Folder:', folder);
+  
+      // Create and save the comment
+      const comment = new Comment();
+      comment.content = content;
+      comment.user = user;
+      comment.folder = folder;
+  
+      const savedComment = await this.commentRepository.save(comment);
+  
+      // Notify other users (excluding the folder owner) about the new comment
+      if (folder.user.id !== userId) {
+        const userName = user.username;
+        const folderName = folder.category;
+  
+        await this.notificationService.createNotifForComment(
+          `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
+          savedComment.id
+        );
+      }
+  
+      return savedComment;
+    } catch (error) {
+      console.error('Error in addComment:', error);
+      throw error;
     }
-
-    const comment = new Comment();
-    comment.content = content;
-    comment.user = user;
-    comment.folder = folder;
-
-    return this.commentRepository.save(comment);
   }
+  
+
 
 
   //fetch comments
@@ -51,34 +85,107 @@ export class CommentService {
 
 
 
+  // async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
+  //   const parentComment = await this.commentRepository.findOne({ where: { id: commentId } });
+  //   if (!parentComment) {
+  //     throw new NotFoundException('Parent comment not found');
+  //   }
+
+  //   // Extract mentioned username if it exists
+  //   const mentionMatch = content.match(/@(\w+)/);
+  //   let mentionedUser = null;
+
+  //   if (mentionMatch) {
+  //     const mentionedUsername = mentionMatch[1];
+  //     mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
+  //     if (!mentionedUser) {
+  //       // Optionally handle the case where the mentioned user does not exist
+  //       console.warn(`Mentioned user ${mentionedUsername} not found.`);
+  //     }
+  //   }
+
+  //   const reply = this.commentRepository.create({
+  //     content,
+  //     user: { id: userId },
+  //     parent: parentComment,
+  //     folder: parentComment.folder  // Ensure the folder is also set correctly
+  //   });
+  //   const savedReply = await this.commentRepository.save(reply);
+
+  //   // Fetch the user and folder names for the notification message
+  //   const userName = parentComment.user.username;
+  //   const folderName = parentComment.folder.category;
+  //   await this.notificationService.createNotifForComment(`Nouveau commentaire de ${userName} sur votre poste ${folderName}`, parentComment.id);
+
+  //   return savedReply;
+  // }
+
   async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
-    const parentComment = await this.commentRepository.findOne({ where: { id: commentId } });
+    // Fetch the parent comment along with its related user and folder
+    const parentComment = await this.commentRepository.findOne({ 
+      where: { id: commentId }, 
+      relations: ['folder', 'user'] 
+    });
+    console.log('Parent Comment:', parentComment);
     if (!parentComment) {
       throw new NotFoundException('Parent comment not found');
     }
-
-    // Extract mentioned username if it exists
+  
+    // Extract mentioned username from the reply content if it exists
     const mentionMatch = content.match(/@(\w+)/);
     let mentionedUser = null;
-
+  
     if (mentionMatch) {
       const mentionedUsername = mentionMatch[1];
       mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
       if (!mentionedUser) {
-        // Optionally handle the case where the mentioned user does not exist
         console.warn(`Mentioned user ${mentionedUsername} not found.`);
       }
     }
-
+  
+    // Create a new reply associated with the parent comment and user
     const reply = this.commentRepository.create({
       content,
       user: { id: userId },
       parent: parentComment,
-      folder: parentComment.folder  // Ensure the folder is also set correctly
+     // folder: parentComment.folder
     });
-    return this.commentRepository.save(reply);
-  }
+    console.log('Reply to be saved:', reply);
+    const savedReply = await this.commentRepository.save(reply);
+    console.log('Saved Reply:', savedReply);
+    
+    const replier = await this.userRepository.findOne({ where: { id: userId } });
 
+    // Notify the folder owner if the reply is not from them
+    if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
+      console.log(`Creating notification for folder ID: ${parentComment.folder.id}`);
+      await this.notificationService.createNotifForFolder(
+        `Nouveau commentaire de ${replier?.username} sur votre dossier ${parentComment.folder.category}`, 
+        parentComment.folder.id,
+        parentComment.folder.user.id
+      );
+    }
+  
+    // Notify the comment owner if the reply is not from them
+    if (parentComment.user && parentComment.user.id !== userId) {
+      console.log(`Creating notification for comment ID: ${parentComment.id}`);
+      await this.notificationService.createNotifForReply(
+        `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`, 
+        parentComment.id
+      );
+    }
+  
+    // Optionally, notify the mentioned user if they exist and are different from the replier and comment owner
+    if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
+      console.log(`Creating notification for mention in comment ID: ${parentComment.id}`);
+      await this.notificationService.createNotifForMention(
+        `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
+        parentComment.id
+      );
+    }
+  
+    return savedReply;
+  }
 
   async updateComment(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
@@ -99,11 +206,10 @@ export class CommentService {
     return comment;
   }
 
- 
   async deleteComment(commentId: number, userId: number): Promise<void> {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
-      relations:['user', 'folder']
+      relations: ['user', 'folder']
     });
 
     if (!comment) {
@@ -116,7 +222,6 @@ export class CommentService {
 
     await this.commentRepository.remove(comment);
   }
-  
 
   async updateReply(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
     const reply = await this.commentRepository.findOne({
@@ -161,8 +266,6 @@ export class CommentService {
       relations: ['folder']
     })
   }
-
-
 
   async findUsersByPrefix(prefix: string): Promise<User[]> {
     const users = await this.userRepository.find({
