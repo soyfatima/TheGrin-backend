@@ -41,6 +41,7 @@ async function bootstrap() {
   app.useLogger(new Logger());
   app.use('/blog-backend/uploads', express.static('uploads'));
   app.use('/blog-backend/userFile', express.static('userFile'));
+  app.use('/blog-backend/adminFile', express.static('adminFile'));
 
   await app.listen(3000);
 }

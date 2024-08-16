@@ -28,6 +28,7 @@ export class NotificationController {
 
         await this.notificationService.deleteUserNotification(userId, id);
     }
+    
     @UseGuards(JwtAuthGuard)
     @Delete('')
     public async deleteAllNotifications(@Req() req: any): Promise<void> {
@@ -41,6 +42,11 @@ export class NotificationController {
         }
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Get(':id')
+    async getNotificationById(@Param('id') id: number, @Req() req: any) {
+        return this.notificationService.getNotificationById(id); // Fetch by notification ID
+    }
 
     // @UseGuards(JwtAuthGuard)
     // @Delete(':id')

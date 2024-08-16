@@ -34,6 +34,7 @@ import { folderFileOptions } from './fileOption';
 import { NotificationController } from './controller/notification.controller';
 import { NotificationService } from './service/notification.service';
 import { Notification } from './notif.entity';
+import { adminFileOptions } from './adminFileOption';
 
 @Module({
   imports: [
@@ -47,10 +48,10 @@ import { Notification } from './notif.entity';
       entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification],
       synchronize: true,
     }),
-    
+
     MulterModule.register(multerOptions),
     MulterModule.register(folderFileOptions),
-
+    MulterModule.register(adminFileOptions),
     TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification]),
     JwtModule.register({
       secret: jwtConfig.secret,
@@ -70,7 +71,7 @@ import { Notification } from './notif.entity';
       defaults: {
         from: '"No Reply" <no-reply@example.com>',
       },
-    
+
     }),
     // other modules
 

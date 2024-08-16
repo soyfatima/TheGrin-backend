@@ -84,7 +84,62 @@ export class CommentService {
   }
 
 
-
+  async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
+    const parentComment = await this.commentRepository.findOne({
+      where: { id: commentId },
+      relations: ['folder', 'user']
+    });
+    if (!parentComment) {
+      throw new NotFoundException('Parent comment not found');
+    }
+  
+    const mentionMatch = content.match(/@(\w+)/);
+    let mentionedUser = null;
+    let mentionedUserId = null;
+  
+    if (mentionMatch) {
+      const mentionedUsername = mentionMatch[1];
+      mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
+      if (mentionedUser) {
+        mentionedUserId = mentionedUser.id;
+      }
+    }
+  
+    const reply = this.commentRepository.create({
+      content,
+      user: { id: userId },
+      parent: parentComment
+    });
+    const savedReply = await this.commentRepository.save(reply);
+  
+    const replier = await this.userRepository.findOne({ where: { id: userId } });
+  
+    if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
+      await this.notificationService.createNotifForFolder(
+        `Nouveau commentaire de ${replier?.username} sur votre dossier ${parentComment.folder.category}`,
+        parentComment.folder.id,
+        parentComment.folder.user.id
+      );
+    }
+  
+    if (parentComment.user && parentComment.user.id !== userId) {
+      await this.notificationService.createNotifForReply(
+        `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`,
+        parentComment.id
+      );
+    }
+  
+    if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
+      await this.notificationService.createNotifForMention(
+        `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
+        parentComment.id,
+        mentionedUserId
+      );
+    }
+  
+    return savedReply;
+  }
+  
   // async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
   //   const parentComment = await this.commentRepository.findOne({ where: { id: commentId } });
   //   if (!parentComment) {
@@ -120,72 +175,77 @@ export class CommentService {
   //   return savedReply;
   // }
 
-  async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
-    // Fetch the parent comment along with its related user and folder
-    const parentComment = await this.commentRepository.findOne({ 
-      where: { id: commentId }, 
-      relations: ['folder', 'user'] 
-    });
-    console.log('Parent Comment:', parentComment);
-    if (!parentComment) {
-      throw new NotFoundException('Parent comment not found');
-    }
+  // async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
+  //   // Fetch the parent comment along with its related user and folder
+  //   const parentComment = await this.commentRepository.findOne({ 
+  //     where: { id: commentId }, 
+  //     relations: ['folder', 'user'] 
+  //   });
+  //   console.log('Parent Comment:', parentComment);
+  //   if (!parentComment) {
+  //     throw new NotFoundException('Parent comment not found');
+  //   }
   
-    // Extract mentioned username from the reply content if it exists
-    const mentionMatch = content.match(/@(\w+)/);
-    let mentionedUser = null;
-  
-    if (mentionMatch) {
-      const mentionedUsername = mentionMatch[1];
-      mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
-      if (!mentionedUser) {
-        console.warn(`Mentioned user ${mentionedUsername} not found.`);
-      }
-    }
-  
-    // Create a new reply associated with the parent comment and user
-    const reply = this.commentRepository.create({
-      content,
-      user: { id: userId },
-      parent: parentComment,
-     // folder: parentComment.folder
-    });
-    console.log('Reply to be saved:', reply);
-    const savedReply = await this.commentRepository.save(reply);
-    console.log('Saved Reply:', savedReply);
+  //   // Extract mentioned username from the reply content if it exists
+  //   const mentionMatch = content.match(/@(\w+)/);
+  //   let mentionedUser = null;
     
-    const replier = await this.userRepository.findOne({ where: { id: userId } });
+  //   if (mentionMatch) {
+  //     const mentionedUsername = mentionMatch[1];
+  //     mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
+  //     if (!mentionedUser) {
+  //       console.warn(`Mentioned user ${mentionedUsername} not found.`);
+  //     }
+  //   }
+    
+  
+  //   // Create a new reply associated with the parent comment and user
+  //   const reply = this.commentRepository.create({
+  //     content,
+  //     user: { id: userId },
+  //     parent: parentComment,
+  //    // folder: parentComment.folder
+  //   });
+  //   console.log('Reply to be saved:', reply);
+  //   const savedReply = await this.commentRepository.save(reply);
+  //   console.log('Saved Reply:', savedReply);
+    
+  //   const replier = await this.userRepository.findOne({ where: { id: userId } });
 
-    // Notify the folder owner if the reply is not from them
-    if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
-      console.log(`Creating notification for folder ID: ${parentComment.folder.id}`);
-      await this.notificationService.createNotifForFolder(
-        `Nouveau commentaire de ${replier?.username} sur votre dossier ${parentComment.folder.category}`, 
-        parentComment.folder.id,
-        parentComment.folder.user.id
-      );
-    }
+  //   // Notify the folder owner if the reply is not from them
+  //   if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
+  //     console.log(`Creating notification for folder ID: ${parentComment.folder.id}`);
+  //     await this.notificationService.createNotifForFolder(
+  //       `Nouveau commentaire de ${replier?.username} sur votre dossier ${parentComment.folder.category}`, 
+  //       parentComment.folder.id,
+  //       parentComment.folder.user.id
+  //     );
+  //   }
   
-    // Notify the comment owner if the reply is not from them
-    if (parentComment.user && parentComment.user.id !== userId) {
-      console.log(`Creating notification for comment ID: ${parentComment.id}`);
-      await this.notificationService.createNotifForReply(
-        `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`, 
-        parentComment.id
-      );
-    }
+  //   // Notify the comment owner if the reply is not from them
+  //   if (parentComment.user && parentComment.user.id !== userId) {
+  //     console.log(`Creating notification for comment ID: ${parentComment.id}`);
+  //     await this.notificationService.createNotifForReply(
+  //       `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`, 
+  //       parentComment.id
+  //     );
+  //   }
   
-    // Optionally, notify the mentioned user if they exist and are different from the replier and comment owner
-    if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
-      console.log(`Creating notification for mention in comment ID: ${parentComment.id}`);
-      await this.notificationService.createNotifForMention(
-        `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
-        parentComment.id
-      );
-    }
-  
-    return savedReply;
-  }
+  //   // Optionally, notify the mentioned user if they exist and are different from the replier and comment owner
+  //   if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
+  //     console.log(`Creating notification for mention in comment ID: ${parentComment.id}`);
+  //     console.log(`Notification message: Vous avez été mentionné dans un commentaire par ${replier?.username}`);
+      
+  //     const notification = await this.notificationService.createNotifForMention(
+  //       `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
+  //       parentComment.id
+  //     );
+    
+  //     console.log('Created notification:', notification);
+  //   }
+    
+  //   return savedReply;
+  // }
 
   async updateComment(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
     const comment = await this.commentRepository.findOne({

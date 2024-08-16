@@ -21,48 +21,58 @@ export class NotificationService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Folder)
     private readonly folderRepository: Repository<Folder>
-  ) {}
+  ) { }
+
 
   async createNotifForComment(message: string, commentId: number): Promise<Notification> {
-    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user'] });
+    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
     if (!comment) {
-      throw new Error('Comment not found');
+        throw new Error('Comment not found');
     }
 
     const notification = new Notification();
     notification.message = message;
     notification.comment = comment;
     notification.user = comment.user; // Notify the owner of the comment
+    notification.folder = comment.folder; // Include the associated folder
 
     return this.notificationRepository.save(notification);
-  }
-  async createNotifForReply(message: string, commentId: number): Promise<Notification> {
-    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user'] });
+}
+
+async createNotifForReply(message: string, commentId: number): Promise<Notification> {
+    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
     if (!comment) {
-      throw new Error('Comment not found');
+        throw new Error('Comment not found');
     }
 
     const notification = new Notification();
     notification.message = message;
     notification.comment = comment;
     notification.user = comment.user; // Notify the owner of the comment
+    notification.folder = comment.folder; // Include the associated folder
 
     return this.notificationRepository.save(notification);
-  }
+}
 
-async createNotifForMention(message: string, commentId: number): Promise<Notification> {
-    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user'] });
+async createNotifForMention(message: string, commentId: number, mentionedUserId: number): Promise<Notification> {
+    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
     if (!comment) {
-      throw new Error('Comment not found');
+        throw new Error('Comment not found');
+    }
+
+    const mentionedUser = await this.userRepository.findOne({ where: { id: mentionedUserId } });
+    if (!mentionedUser) {
+        throw new Error('Mentioned user not found');
     }
 
     const notification = new Notification();
     notification.message = message;
     notification.comment = comment;
-    notification.user = comment.user; // Notify the mentioned user
+    notification.user = mentionedUser; // Notify the mentioned user
+    notification.folder = comment.folder; // Include the associated folder
 
     return this.notificationRepository.save(notification);
-  }
+}
 
 
   async createNotifForFolder(message: string, folderId: number, userId: number): Promise<Notification> {
@@ -100,45 +110,53 @@ async createNotifForMention(message: string, commentId: number): Promise<Notific
 
   async getAllNotifications(userId: number): Promise<Notification[]> {
     try {
-        return await this.notificationRepository.find({
-            where: { user: { id: userId } }, // Filter by user ID
-            relations: ['order', 'comment', 'comment.user', 'comment.folder', 'user'],
-            order: { createdAt: 'DESC' },
-        });
+      return await this.notificationRepository.find({
+        where: { user: { id: userId } }, // Filter by user ID
+        relations: ['order', 'comment', 'comment.user', 'comment.folder', 'user'],
+        order: { createdAt: 'DESC' },
+      });
     } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-        throw new Error('Unable to fetch notifications');
+      console.error('Failed to fetch notifications:', error);
+      throw new Error('Unable to fetch notifications');
     }
+  }
+  // notification.service.ts (or equivalent service)
+async getNotificationById(notificationId: number): Promise<Notification> {
+  // Fetch notification from repository
+  return await this.notificationRepository.findOne({
+    where: { id: notificationId },
+    relations: ['folder', 'comment'] // Ensure related entities are included
+  });
 }
 
 
-async deleteUserNotification(userId: number, notificationId: number): Promise<void> {
-  const notification = await this.notificationRepository.findOne({ 
+  async deleteUserNotification(userId: number, notificationId: number): Promise<void> {
+    const notification = await this.notificationRepository.findOne({
       where: { id: notificationId, user: { id: userId } } // Ensure the notification belongs to the user
-  });
-  
-  if (!notification) {
+    });
+
+    if (!notification) {
       throw new NotFoundException('Notification not found or not authorized');
+    }
+
+    await this.notificationRepository.delete(notificationId);
   }
 
-  await this.notificationRepository.delete(notificationId);
-}
-
-async deleteAllUserNotifications(userId: number): Promise<void> {
-  try {
+  async deleteAllUserNotifications(userId: number): Promise<void> {
+    try {
       await this.notificationRepository.delete({ user: { id: userId } }); // Delete all notifications for this user
-  } catch (error) {
+    } catch (error) {
       console.error('Error deleting all notifications:', error);
       throw new Error('Failed to delete all notifications');
+    }
   }
-}
 
 
 
   // async deleteNotification(id:number): Promise<void>{
   //  await this.notificationRepository.delete(id)
   // }
- 
+
   async deleteAllNotifications(): Promise<void> {
     try {
       await this.notificationRepository.delete({});
@@ -147,5 +165,5 @@ async deleteAllUserNotifications(userId: number): Promise<void> {
       throw new Error('Failed to delete all notifications');
     }
   }
-  
+
 }

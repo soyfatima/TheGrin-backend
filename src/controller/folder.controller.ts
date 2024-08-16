@@ -17,6 +17,7 @@ import {
   Put,
   Delete,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 //import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -27,6 +28,7 @@ import { FolderService } from '../service/folder.service';
 import { multerOptions } from '../multerOptions';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { folderFileOptions } from 'src/fileOption';
+import { adminFileOptions } from 'src/adminFileOption';
 
 @Controller('folders')
 export class FolderController {
@@ -34,46 +36,45 @@ export class FolderController {
 
   //create folder 
   @UseGuards(JwtAuthGuard)
-@Post('create')
-@UseInterceptors(FileInterceptor('uploadedFile', folderFileOptions))
-async createFolder(
-  @UploadedFile() file,
-  @Req() req,
-  @Body() folderData: Partial<Folder>,
-) {
-  try {
-    const userId = (req.user as { userId: number }).userId;
-    
-    // Ensure content is present
-    if (!folderData.content) {
-      throw new Error('Content is required');
+  @Post('create')
+  @UseInterceptors(FileInterceptor('uploadedFile', folderFileOptions))
+  async createFolder(
+    @UploadedFile() file,
+    @Req() req,
+    @Body() folderData: Partial<Folder>,
+  ) {
+    try {
+      const userId = (req.user as { userId: number }).userId;
+
+      // Ensure content is present
+      if (!folderData.content) {
+        throw new Error('Content is required');
+      }
+
+      // Add the file information to folderData
+      const updatedFolderData = {
+        ...folderData,
+        uploadedFile: file ? file.filename : null, // Safely handle file
+      };
+
+      const folder = await this.FolderService.createFolder(userId, updatedFolderData);
+      return folder;
+    } catch (error) {
+      console.error('Error during folder creation:', error.message); // Log error message
+      throw new HttpException(
+        'Failed to create folder',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    // Add the file information to folderData
-    const updatedFolderData = {
-      ...folderData,
-      uploadedFile: file ? file.filename : null, // Safely handle file
-    };
-
-    const folder = await this.FolderService.createFolder(userId, updatedFolderData);
-    return folder;
-  } catch (error) {
-    console.error('Error during folder creation:', error.message); // Log error message
-    throw new HttpException(
-      'Failed to create folder',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
   }
-}
-
   //fetch folder and folderdetails
   //@UseGuards(JwtAuthGuard)
   @Get('user-folders/:id')
   async getUserFolders(
-    @Param('id')id:number,
-    @Param('userId')userId:number): Promise<Folder[]> {
-      return await this.FolderService.getUserFolders(id, userId);
-    }
+    @Param('id') id: number,
+    @Param('userId') userId: number): Promise<Folder[]> {
+    return await this.FolderService.getUserFolders(id, userId);
+  }
 
 
   //fetch folder and folderdetails
@@ -113,11 +114,101 @@ async createFolder(
       );
     }
   }
-  
+
 
   //get folderdetails by id
   @Get('getfolderdetails/:id')
   async getFolderDetailsById(@Param('id') id: number): Promise<Folder> {
     return await this.FolderService.getFolderDetailsById(id);
   }
+
+
+
+
+
+
+  @UseGuards(JwtAuthGuard)
+  @Post('create/note')
+  @UseInterceptors(FileInterceptor('uploadedFile', adminFileOptions))
+  async createAdminNote(
+    @UploadedFile() file,
+    @Body() folderData: Partial<Folder>,
+    @Req() req: any,  // Extract the request object to get authenticated admin info
+  ) {
+    try {
+      const admin = req.user;  // Extract the admin from the request (assuming it's included in the JWT)
+  
+      const folder = await this.FolderService.createAdminNote(
+        {
+          ...folderData,
+          uploadedFile: file ? file.filename : null, // Safely handle file
+
+        },
+        admin,  // Pass the admin to the service
+      );
+      return folder;
+    } catch (error) {
+      console.error('Error creating folder:', error); // Log the error for debugging
+      throw new HttpException(
+        'Failed to create folder',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  
+  //get admin note
+  @Get('admin-notes')
+  async getAllAdminNotes(): Promise<Folder[]> {
+    return await this.FolderService.getAllAdminNote();
+  }
+
+  //update admin note
+  @UseGuards(JwtAuthGuard)
+@Patch('update/note/:id')
+async updateAdminNote(
+  @Param('id') id: number,
+  @Body() updatedFolderData: Partial<Folder>,
+): Promise<Folder> {
+  try {
+    const folder = await this.FolderService.updateAdminNote(id, updatedFolderData);
+    return folder;
+  } catch (error) {
+    throw new HttpException(
+      'Failed to update folder',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+@UseGuards(JwtAuthGuard)
+@Delete('delete/note/:id')
+async deleteAdminNote(
+  @Param('id') id: number,
+): Promise<void> {
+  try {
+    await this.FolderService.deleteAdminNote(id);
+  } catch (error) {
+    throw new HttpException(
+      'Failed to delete folder',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+//@UseGuards(JwtAuthGuard)
+@Get('notedetails/:id')
+async getAdminNoteDetailById(
+  @Param('id') id: number,
+): Promise<Folder> {
+  try {
+    const folder = await this.FolderService.getAdminNoteDetailById(id);
+    return folder;
+  } catch (error) {
+    throw new HttpException(
+      'Folder not found',
+      HttpStatus.NOT_FOUND,
+    );
+  }
+}
+
 }

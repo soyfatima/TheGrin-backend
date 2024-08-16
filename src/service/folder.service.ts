@@ -17,6 +17,7 @@ import { User } from 'src/user.entity';
 import { Comment
 
  } from 'src/comment.entity';
+import { Admin } from 'src/admin.entity';
 @Injectable()
 export class FolderService {
   constructor(
@@ -24,6 +25,10 @@ export class FolderService {
     private folderRepository: Repository<Folder>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
+    
+
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
   ) { }
@@ -32,13 +37,11 @@ export class FolderService {
   async createFolder(userId: number, folderData: Partial<Folder>): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...folderData,
-      user: { id: userId }
-
+     user: { id: userId }
     });
 
     return await this.folderRepository.save(folder);
   }
-
 
   // fetch folders and folderdetails
   // async getUserFolders(id:number): Promise<Folder[]> {
@@ -65,12 +68,14 @@ export class FolderService {
 
   // fetch folders and folderdetails
   async getAllFolders(): Promise<Folder[]> {
-    return await this.folderRepository.find({ relations: ['user'] });
+    return await this.folderRepository.find({ relations: ['user'], });
   }
 
 // async getUserFolder():Promise<Folder[]>{
 //   return await this.folderRepository.find({relations:['user']})
 // }
+
+
   //edit content
   async updateFolderContent(userId: number, id: number, content: string): Promise<Folder> {
     // Fetch the folder including its associated user
@@ -113,4 +118,70 @@ export class FolderService {
   async getFolderDetailsById(id: number): Promise<Folder> {
     return await this.folderRepository.findOne({ where: { id } });
   }
+
+
+
+
+
+
+  
+  async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
+    const folder = this.folderRepository.create({
+      ...folderData,
+      isAdmin: true,  // Mark this folder as created by the admin
+      admin: admin,   // Associate the folder with the admin
+    });
+  
+    return await this.folderRepository.save(folder);
+  }
+
+
+  async getAllAdminNote(): Promise<Folder[]> {
+    return await this.folderRepository.find({
+      where: { isAdmin: true },
+    });
+  }
+  
+//update adminnote
+  async updateAdminNote(
+    id: number,
+    updatedFolderData: Partial<Folder>,
+  ): Promise<Folder> {
+    const folder = await this.folderRepository.findOne({
+      where: { id, isAdmin: true },
+    });
+  
+    if (!folder) {
+      throw new NotFoundException('Admin folder not found');
+    }
+  
+    Object.assign(folder, updatedFolderData);
+    return await this.folderRepository.save(folder);
+  }
+
+  //delete admin note
+  async deleteAdminNote(id: number): Promise<void> {
+    const result = await this.folderRepository.delete({
+      id,
+      isAdmin: true,
+    });
+  
+    if (result.affected === 0) {
+      throw new NotFoundException('Admin folder not found');
+    }
+  }
+
+  async getAdminNoteDetailById(id: number): Promise<Folder> {
+    const folder = await this.folderRepository.findOne({
+      where: { id, isAdmin: true },
+    });
+  
+    if (!folder) {
+      throw new NotFoundException('Admin folder not found');
+    }
+  
+    return folder;
+  }
+  
+  
 }

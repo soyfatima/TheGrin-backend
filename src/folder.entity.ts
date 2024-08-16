@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Comment } from './comment.entity';
+import { Admin } from './admin.entity';
 
 @Entity({ name: 'folders' })
 export class Folder {
@@ -24,22 +25,29 @@ export class Folder {
 
   @Column()
   content: string;
-  
+
   @Column({ nullable: true })
   uploadedFile: string;
 
-  
+
   @ManyToOne(() => User, (user) => user.folders, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;
 
+  @ManyToOne(() => Admin, (admin) => admin.folders, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn()
+  admin: Admin;
+
+  @Column({ default: false })  // Default is false for user-created folders
+  isAdmin: boolean;
+  
   @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
   comments: Comment[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
-  
+
   @UpdateDateColumn({ type: 'timestamp' })
-updatedAt: Date;
+  updatedAt: Date;
 
 }

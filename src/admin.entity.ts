@@ -21,4 +21,7 @@ export class Admin {
   @Column({ nullable: true })
   accessToken: string;
 
+  @OneToMany(() => Folder, (folder) => folder.admin, { onDelete: 'CASCADE' })
+  folders: Folder[];
+
 }
