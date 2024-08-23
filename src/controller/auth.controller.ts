@@ -75,9 +75,7 @@ export class AuthController {
 
     const accessToken = this.authService.generateAccessToken(user);
     const refreshToken = this.authService.generateRefreshToken(user);
-    // Set tokens as cookies in the response
-    //console.log('access token', accessToken),
-    //console.log('refresh token',refreshToken)
+   
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: false,
@@ -133,8 +131,6 @@ export class AuthController {
   
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
-      //console.log('access token', accessToken),
-      //console.log('refresh token',refreshToken)
       // Set tokens as cookies in the response
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
@@ -170,17 +166,6 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body('email') email: string, @Body('code') code: string, @Body('newPassword') newPassword: string): Promise<void> {
     await this.authService.resetPassword(email, code, newPassword);
-  }
-
-  //verify status of log user
-  @Post('verify-token')
-  async verifyToken(
-    @Body() body: { accessToken: string },
-  ): Promise<{ valid: boolean; userId: number | null }> {
-    const { accessToken } = body;
-    const isValid = await this.authService.verifyToken(accessToken);
-    //console.log(this.verifyToken, 'verify token')
-    return { valid: isValid !== null, userId: isValid };
   }
 
   //logout

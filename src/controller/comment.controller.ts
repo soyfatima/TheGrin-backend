@@ -90,11 +90,8 @@ export class CommentController {
   @Delete('delete/:id')
   async deleteComment(
     @Param('id') id: number,
-  //  @Param('folderId') folderId: number,
-
     @Req() req,
   ) {
-    console.log('Request user:', req.user);
     const userId = (req.user as { userId: number }).userId;
 
     try {

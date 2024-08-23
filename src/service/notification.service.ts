@@ -89,7 +89,7 @@ async createNotifForMention(message: string, commentId: number, mentionedUserId:
     const notification = new Notification();
     notification.message = message;
     notification.folder = folder;
-    notification.user = folderOwner; // Notify the owner of the folder
+    notification.user = folderOwner;
 
     return this.notificationRepository.save(notification);
   }
@@ -103,7 +103,7 @@ async createNotifForMention(message: string, commentId: number, mentionedUserId:
     const notification = new Notification();
     notification.message = message;
     notification.order = order;
-    notification.user = order.user; // Notify the owner of the order
+    notification.user = order.user; 
 
     return this.notificationRepository.save(notification);
   }
@@ -120,19 +120,28 @@ async createNotifForMention(message: string, commentId: number, mentionedUserId:
       throw new Error('Unable to fetch notifications');
     }
   }
+
+
   // notification.service.ts (or equivalent service)
 async getNotificationById(notificationId: number): Promise<Notification> {
-  // Fetch notification from repository
   return await this.notificationRepository.findOne({
     where: { id: notificationId },
     relations: ['folder', 'comment'] // Ensure related entities are included
   });
 }
 
+async markAsRead(id: number): Promise<void> {
+  const notification = await this.notificationRepository.findOne({ where: { id } })
+  if (notification) {
+    notification.read = true;
+
+    await this.notificationRepository.save(notification)
+  }
+}
 
   async deleteUserNotification(userId: number, notificationId: number): Promise<void> {
     const notification = await this.notificationRepository.findOne({
-      where: { id: notificationId, user: { id: userId } } // Ensure the notification belongs to the user
+      where: { id: notificationId, user: { id: userId } } 
     });
 
     if (!notification) {

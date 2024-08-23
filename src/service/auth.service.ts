@@ -156,17 +156,6 @@ export class AuthService {
     }
   }
 
-  // Service method to verify token and extract user ID
-  async verifyToken(accessToken: string): Promise<number | null> {
-    try {
-      const decodedToken = this.jwtService.verify(accessToken);
-      const userId = decodedToken.userId;
-      return userId;
-    } catch (error) {
-      return null;
-    }
-  }
-
   async logout(accessToken: string): Promise<void> {
     try {
       const decodedToken = this.jwtService.verify(accessToken);
@@ -199,7 +188,6 @@ export class AuthService {
              <p><strong>${resetCode}</strong></p>`,
         //     from: '"thltechnologies" <no-reply@thltechserveur.com>',
       });
-      //console.log('Email sent successfully');
     } catch (error) {
       console.error('Error sending email:', error);
     }

@@ -207,8 +207,6 @@ export class CartService {
 
   //   //update cartItem
   async updateCartItem(userId: number, productId: number, updateData: Partial<CartItem>): Promise<CartItem> {
-    console.log(`updateCartItem called with userId: ${userId}, productId: ${productId}, updateData: ${JSON.stringify(updateData)}`);
-
     let cartItem = await this.cartItemRepository.findOne({
       where: { product: { id: productId }, user: { id: userId } },
       relations: ['product', 'user',],
@@ -229,10 +227,6 @@ export class CartService {
         throw new Error('User not found');
       }
     }
-
-    // Update selectedSize and quantity fields
-    // Logging updateData for debugging
-    console.log('Update Data:', updateData);
 
     // Validate and update selectedSize and quantity fields
     if (updateData.selectedSize !== undefined) {
@@ -273,8 +267,6 @@ export class CartService {
         const totalQuantity = userChoiceQuantity ? userChoiceQuantity.quantity : 1;
         const productPrice = parseFloat(product.price.replace(/,/g, ''));
         const totalPrice = isNaN(productPrice) ? 0 : productPrice * totalQuantity;
-       console.log('user choice quantity', product.price, 'quantiy', userChoiceQuantity)
-        console.log('total price', totalPrice, 'total quantity', totalQuantity)
 
         return { totalPrice, totalQuantity };
       } else {

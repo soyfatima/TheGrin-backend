@@ -16,8 +16,10 @@ export class Notification {
 
   @ManyToOne(() => Order, { nullable: true })
   order: Order;
-
  
+  @Column({ type: 'boolean', default: false })
+  read: boolean;
+  
   @ManyToOne(() => Comment, comment => comment.notifications, { onDelete: 'CASCADE' })
   comment: Comment;
 

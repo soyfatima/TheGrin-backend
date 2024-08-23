@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Put, Req, UseGuards } from '@nestjs/common';
 import { Notification } from 'src/notif.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { NotificationService } from 'src/service/notification.service';
@@ -7,6 +7,7 @@ import { NotificationService } from 'src/service/notification.service';
 export class NotificationController {
     constructor(private notificationService: NotificationService) { }
 
+    //get all notif
     @UseGuards(JwtAuthGuard)
     @Get('getNotification')
     async getAllNotifications(
@@ -17,7 +18,7 @@ export class NotificationController {
         return await this.notificationService.getAllNotifications(userId);
     }
 
-
+    //delete notif
     @UseGuards(JwtAuthGuard)
     @Delete(':id')
     async deleteNotification(
@@ -28,7 +29,8 @@ export class NotificationController {
 
         await this.notificationService.deleteUserNotification(userId, id);
     }
-    
+
+    //delete all notif
     @UseGuards(JwtAuthGuard)
     @Delete('')
     public async deleteAllNotifications(@Req() req: any): Promise<void> {
@@ -42,12 +44,18 @@ export class NotificationController {
         }
     }
 
+    //get notif by id
     @UseGuards(JwtAuthGuard)
     @Get(':id')
     async getNotificationById(@Param('id') id: number, @Req() req: any) {
         return this.notificationService.getNotificationById(id); // Fetch by notification ID
     }
 
+    @UseGuards(JwtAuthGuard)
+    @Put(':id/read')
+    async markAsRead(@Param('id') id: number): Promise<void> {
+        await this.notificationService.markAsRead(id);
+    }
     // @UseGuards(JwtAuthGuard)
     // @Delete(':id')
     // async deleteNotification(
