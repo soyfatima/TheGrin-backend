@@ -86,7 +86,6 @@ export class CommentController {
   }
 
   @UseGuards(JwtAuthGuard)
-
   @Delete('delete/:id')
   async deleteComment(
     @Param('id') id: number,

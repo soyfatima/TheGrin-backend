@@ -40,7 +40,7 @@ export class userSignupDto {
   username: string;
   password: string;
   email: string;
-  gender:string
+  gender: string
 }
 
 @Controller('auth')
@@ -75,7 +75,7 @@ export class AuthController {
 
     const accessToken = this.authService.generateAccessToken(user);
     const refreshToken = this.authService.generateRefreshToken(user);
-   
+
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: false,
@@ -89,14 +89,14 @@ export class AuthController {
 
     return { accessToken, refreshToken, userInfo: user, role: user.role };
   }
-  
+
   //user signup
   @Post('userSignup')
   async userSignup(
     @Body() userSignupDto: userSignupDto,
     @Res() res: Response,
   ): Promise<void> {
-    const { email, username, password,gender } = userSignupDto;
+    const { email, username, password, gender } = userSignupDto;
     try {
       const accessToken = await this.authService.userSignup(
         email,
@@ -128,7 +128,7 @@ export class AuthController {
       if (!user) {
         throw new UnauthorizedException('Invalid credentials');
       }
-  
+
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
       // Set tokens as cookies in the response
@@ -142,7 +142,7 @@ export class AuthController {
         secure: false,
         sameSite: 'strict',
       });
-  
+
       res.status(200).send({ accessToken, refreshToken, userInfo: user, role });
     } catch (error) {
       console.error('Error during login:', error.message);
@@ -200,5 +200,14 @@ export class AuthController {
     const uploadedFile = file ? file.filename : null;
     return this.authService.updateUserInfo(userId, username, uploadedFile);
   }
-  
+  //@UseGuards(JwtAuthGuard)
+  @Get('user/:id')
+  async getUserInfo(@Param('id') id: number) {
+    const user = await this.authService.getUserInfo(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
 }

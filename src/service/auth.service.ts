@@ -230,4 +230,17 @@ export class AuthService {
     return user;
   }
   
+  async getUserInfo(userId: number): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+  
+    if (!user) {
+      throw new Error('User not found');
+    }
+  
+    return user; // Return the found user object
+  }
+   
+
 }

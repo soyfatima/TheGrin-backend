@@ -55,7 +55,7 @@ import { adminFileOptions } from './adminFileOption';
     TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification]),
     JwtModule.register({
       secret: jwtConfig.secret,
-      signOptions: { expiresIn: '15mn' },
+      signOptions: { expiresIn: '15m' },
     }),
 
     MailerModule.forRoot({
