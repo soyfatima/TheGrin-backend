@@ -188,7 +188,7 @@ export class AuthController {
   @Put(':id/update')
   @UseInterceptors(FileInterceptor('uploadedFile', multerOptions))
   async updateUserInfo(
-    @UploadedFile() file,
+    @UploadedFile() file: Express.Multer.File,
     @Req() req,
     @Param('id', ParseIntPipe) userId: number,
     @Body('username') username?: string,
@@ -197,9 +197,17 @@ export class AuthController {
     if (id !== userId) {
       throw new Error('Unauthorized');
     }
+  
     const uploadedFile = file ? file.filename : null;
-    return this.authService.updateUserInfo(userId, username, uploadedFile);
+    const updatedUser = await this.authService.updateUserInfo(userId, username, uploadedFile);
+  
+    // Return the updated user along with the file name
+    return {
+      ...updatedUser,
+      updatedFileName: uploadedFile,  // Include the file name in the response
+    };
   }
+  
   //@UseGuards(JwtAuthGuard)
   @Get('user/:id')
   async getUserInfo(@Param('id') id: number) {

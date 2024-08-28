@@ -49,24 +49,28 @@ export class AuthService {
     return token;
   }
 
+
   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
       const decodedToken = this.jwtService.verify(refreshToken);
       const userId = decodedToken.userId;
-      const user =
-        (await this.userRepository.findOne(userId)) ||
-        (await this.adminRepository.findOne(userId));
+      const user = await this.userRepository.findOne({ where: { id: userId } }) ||
+        await this.adminRepository.findOne({ where: { id: userId } });
+
       if (!user) {
-        console.error('User not found');
+        console.error('User not found for refresh token. User ID:', userId);
         throw new UnauthorizedException('User not found');
       }
+
       const newAccessToken = this.generateAccessToken(user);
       return newAccessToken;
     } catch (error) {
-      console.error('Invalid refresh token:', error);
+      console.error('Error refreshing access token:', error.message);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
+
+
   async validateAdmin(email: string, password: string): Promise<any> {
     if (
       email === this.predefinedEmail &&
@@ -86,7 +90,7 @@ export class AuthService {
   }
 
   //backend service
-  async userSignup(email: string, username: string, password: string, gender:string): Promise<string> {
+  async userSignup(email: string, username: string, password: string, gender: string): Promise<string> {
     try {
       // Vérifie si l'e-mail est déjà utilisé
       const existingEmail = await this.userRepository.findOne({
@@ -116,9 +120,9 @@ export class AuthService {
       }
 
       // Ensure gender is provided if required
-    if (!gender) {
-      throw new BadRequestException('Please select a gender');
-    }
+      if (!gender) {
+        throw new BadRequestException('Please select a gender');
+      }
 
       // Crée un nouvel utilisateur avec l'e-mail, le nom d'utilisateur et le mot de passe
       const newUser = this.userRepository.create({ email, username, password, gender });
@@ -213,34 +217,34 @@ export class AuthService {
 
   async updateUserInfo(userId: number, username?: string, uploadedFile?: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
-  
+
     if (!user) {
       throw new Error('User not found');
     }
-  
+
     if (username) {
       user.username = username;
     }
-  
+
     if (uploadedFile) {
       user.uploadedFile = uploadedFile;
     }
-  
+
     await this.userRepository.save(user);
     return user;
   }
-  
+
   async getUserInfo(userId: number): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
-  
+
     if (!user) {
       throw new Error('User not found');
     }
-  
+
     return user; // Return the found user object
   }
-   
+
 
 }
