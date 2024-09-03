@@ -16,6 +16,8 @@ import {
   BadRequestException,
   Put,
   ParseIntPipe,
+  HttpStatus,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -57,7 +59,11 @@ export class AuthController {
     @Body() { refreshToken }: { refreshToken: string },
   ): Promise<{ accessToken: string }> {
     const newAccessToken =
+
       await this.authService.refreshAccessToken(refreshToken);
+
+    console.log(newAccessToken, 'new access token')
+
     return { accessToken: newAccessToken };
   }
 
@@ -120,9 +126,44 @@ export class AuthController {
   }
 
   //user login
+  // @Post('userLogin')
+  // async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
+  //   const { username, password } = userLoginDto;
+  //   try {
+  //     const { user, role } = await this.authService.userLogin(username, password);
+  //     if (!user) {
+  //       throw new UnauthorizedException('Invalid credentials');
+  //     }
+
+  //     const accessToken = this.authService.generateAccessToken(user);
+  //     const refreshToken = this.authService.generateRefreshToken(user);
+
+  //     console.log(accessToken, 'accesstoken'),
+  //     console.log(refreshToken, 'refreshtoken'),
+
+  //     // Set tokens as cookies in the response
+  //     res.cookie('accessToken', accessToken, {
+  //       httpOnly: true,
+  //       secure: false,
+  //       sameSite: 'strict',
+  //     });
+  //     res.cookie('refreshToken', refreshToken, {
+  //       httpOnly: true,
+  //       secure: false,
+  //       sameSite: 'strict',
+  //     });
+
+  //     res.status(200).send({ accessToken, refreshToken, userInfo: user, role });
+  //   } catch (error) {
+  //     console.error('Error during login:', error.message);
+  //     res.status(400).send({ message: error.message });
+  //   }
+  // }
+
   @Post('userLogin')
   async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
     const { username, password } = userLoginDto;
+
     try {
       const { user, role } = await this.authService.userLogin(username, password);
       if (!user) {
@@ -131,22 +172,26 @@ export class AuthController {
 
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
+
+      console.log('Access Token:', accessToken);
+      console.log('Refresh Token:', refreshToken);
+
       // Set tokens as cookies in the response
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: false,
+        secure: false, // Set to true if using HTTPS
         sameSite: 'strict',
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: false, // Set to true if using HTTPS
         sameSite: 'strict',
       });
 
-      res.status(200).send({ accessToken, refreshToken, userInfo: user, role });
+      res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
     } catch (error) {
       console.error('Error during login:', error.message);
-      res.status(400).send({ message: error.message });
+      res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
     }
   }
 
@@ -197,17 +242,17 @@ export class AuthController {
     if (id !== userId) {
       throw new Error('Unauthorized');
     }
-  
+
     const uploadedFile = file ? file.filename : null;
     const updatedUser = await this.authService.updateUserInfo(userId, username, uploadedFile);
-  
-    // Return the updated user along with the file name
+
     return {
       ...updatedUser,
-      updatedFileName: uploadedFile,  // Include the file name in the response
+      updatedFileName: uploadedFile,
+
     };
   }
-  
+
   //@UseGuards(JwtAuthGuard)
   @Get('user/:id')
   async getUserInfo(@Param('id') id: number) {
@@ -216,6 +261,33 @@ export class AuthController {
       throw new NotFoundException('User not found');
     }
     return user;
+  }
+
+  @Get('admin/:id')
+  async getAdminInfo(@Param('id') id: number) {
+    const admin = await this.authService.getAdminInfo(id);
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+    return admin; // Return the admin data here
+  }
+  
+
+
+  @Patch('blockUser')
+  async blockUser(
+    @Param('id') id: number,
+    @Body() body: { blocked: boolean },
+    @Res() res: Response
+  ) {
+    console.log('Received request to block/unblock user:', { id, blocked: body.blocked });
+    try {
+      const user = await this.authService.blockUser(id, body.blocked);
+      res.status(200).send(user);
+    } catch (error) {
+      console.error('Error blocking user:', error.message);
+      res.status(400).send({ message: error.message });
+    }
   }
 
 }

@@ -76,4 +76,6 @@ export class User {
   @OneToMany(() => CartItem, cartItem => cartItem.user)
   cartItems: CartItem[];
 
+  @Column({ type: 'boolean', default: false })
+  blocked: boolean;
 }

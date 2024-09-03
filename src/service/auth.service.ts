@@ -22,6 +22,9 @@ export class AuthService {
   private readonly predefinedEmail = 'contact@thltechnologies.com';
   private readonly predefinedPassword = 'THL@AdminBlog';
 
+  private readonly predefineUsername = 'admin';
+  private readonly predefineAdminPassword = 'admin00'
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
@@ -44,7 +47,7 @@ export class AuthService {
 
   generateRefreshToken(user: User | Admin): string {
     const payload = { userId: user.id };
-    const options = { expiresIn: '1d' };
+    const options = { expiresIn: '7d' };
     const token = this.jwtService.sign(payload, options);
     return token;
   }
@@ -53,7 +56,9 @@ export class AuthService {
   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
       const decodedToken = this.jwtService.verify(refreshToken);
+      console.log(decodedToken, 'decodedToken')
       const userId = decodedToken.userId;
+      console.log(userId, 'userId')
       const user = await this.userRepository.findOne({ where: { id: userId } }) ||
         await this.adminRepository.findOne({ where: { id: userId } });
 
@@ -142,23 +147,85 @@ export class AuthService {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  // async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
+  //   try {
+  //     const user = await this.userRepository.findOne({ where: { username } });
+  //     if (!user) {
+  //       throw new UnauthorizedException('Invalid username or password');
+  //     }
+  //     // Compare the password
+  //     const isPasswordValid = await user.comparePassword(password);
+  //     if (!isPasswordValid) {
+  //       throw new UnauthorizedException('Invalid username or password');
+  //     }
+  //     return { user, role: 'user' };
+  //   } catch (error) {
+  //     console.error('Error during login:', error.message);
+  //     throw new UnauthorizedException(error.message);
+  //   }
+  // }
+
+
   async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
     try {
-      const user = await this.userRepository.findOne({ where: { username } });
+      console.log('Attempting login for username:', username);
+
+      // Handle admin login
+      if (username === this.predefineUsername) {
+        console.log('Admin login attempt');
+        const admin = await this.adminRepository.findOne({
+          where: { username: this.predefineUsername },
+        });
+
+        console.log('Fetched admin from database:', admin);
+
+        if (!admin) {
+          throw new UnauthorizedException('Admin user does not exist');
+        }
+
+        // Compare the password
+        const isPasswordValid = password === this.predefineAdminPassword;
+        console.log('Password validity for admin:', isPasswordValid);
+
+        if (!isPasswordValid) {
+          throw new UnauthorizedException('Invalid username or password');
+        }
+
+        return { user: admin, role: 'admin' };
+      }
+
+      // Handle regular user login
+      const user = await this.userRepository.findOne({
+        where: { username }
+      });
+
+      console.log('Fetched user from database:', user);
+
       if (!user) {
         throw new UnauthorizedException('Invalid username or password');
       }
-      // Compare the password
+
+      if (user.blocked) {
+        throw new UnauthorizedException('User is blocked');
+      }
+
       const isPasswordValid = await user.comparePassword(password);
+      console.log('Password validity for user:', isPasswordValid);
+
       if (!isPasswordValid) {
         throw new UnauthorizedException('Invalid username or password');
       }
+
       return { user, role: 'user' };
     } catch (error) {
       console.error('Error during login:', error.message);
       throw new UnauthorizedException(error.message);
     }
   }
+
+
+
+
 
   async logout(accessToken: string): Promise<void> {
     try {
@@ -244,6 +311,30 @@ export class AuthService {
     }
 
     return user; // Return the found user object
+  }
+
+  async getAdminInfo(id: number): Promise<Admin> {
+    console.log('get admin info', id)
+    const admin = await this.adminRepository.findOne({ where: { id: id } })
+
+    if (!admin) {
+      throw new Error('admin not found');
+    }
+    return admin;
+  }
+
+  async blockUser(userId: number, blocked: boolean): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } })
+
+    if (!user) {
+
+      throw new UnauthorizedException('User not found');
+    }
+
+    user.blocked = blocked;
+
+
+    return await this.userRepository.save(user)
   }
 
 

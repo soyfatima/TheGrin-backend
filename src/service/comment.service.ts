@@ -23,44 +23,45 @@ export class CommentService {
 
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
     try {
-      // Fetch user and folder, including the user relation in the folder
+
       const user = await this.userRepository.findOne({ where: { id: userId } });
-      const folder = await this.folderRepository.findOne({ 
+      const folder = await this.folderRepository.findOne({
         where: { id: folderId },
-        relations: ['user'],  // Ensure the 'user' relation is loaded
+        relations: ['user'],
       });
-  
+
       if (!user || !folder) {
-        console.error('User or Folder not found', { userId, folderId });
         throw new Error('User or Folder not found');
       }
-  
-      // Create and save the comment
+
+      if (user.blocked) {
+        throw new Error('User is blocked and cannot leave comments');
+      }
+
+
       const comment = new Comment();
       comment.content = content;
       comment.user = user;
       comment.folder = folder;
-  
       const savedComment = await this.commentRepository.save(comment);
-  
-      // Notify other users (excluding the folder owner) about the new comment
+
       if (folder.user.id !== userId) {
-        const userName = user.username;
+          const userName = user.username;
         const folderName = folder.category;
-  
+
         await this.notificationService.createNotifForComment(
           `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
           savedComment.id
         );
       }
-  
+
       return savedComment;
     } catch (error) {
       console.error('Error in addComment:', error);
       throw error;
     }
   }
-  
+
 
 
 
@@ -72,6 +73,7 @@ export class CommentService {
         relations: ['user', 'replies', 'replies.user'],
         order: { createdAt: 'ASC' }, // Optionally sort comments by creation date
       });
+      //   console.log('Fetched Comments:', JSON.stringify(comments, null, 2));
       return comments;
     } catch (error) {
       console.error('Error fetching comments:', error.message);
@@ -85,14 +87,16 @@ export class CommentService {
       where: { id: commentId },
       relations: ['folder', 'user']
     });
+
+
     if (!parentComment) {
       throw new NotFoundException('Parent comment not found');
     }
-  
+
     const mentionMatch = content.match(/@(\w+)/);
     let mentionedUser = null;
     let mentionedUserId = null;
-  
+
     if (mentionMatch) {
       const mentionedUsername = mentionMatch[1];
       mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
@@ -100,16 +104,16 @@ export class CommentService {
         mentionedUserId = mentionedUser.id;
       }
     }
-  
+
     const reply = this.commentRepository.create({
       content,
       user: { id: userId },
       parent: parentComment
     });
     const savedReply = await this.commentRepository.save(reply);
-  
+
     const replier = await this.userRepository.findOne({ where: { id: userId } });
-  
+
     if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
       await this.notificationService.createNotifForFolder(
         `Nouveau commentaire de ${replier?.username} sur votre dossier ${parentComment.folder.category}`,
@@ -117,14 +121,14 @@ export class CommentService {
         parentComment.folder.user.id
       );
     }
-  
+
     if (parentComment.user && parentComment.user.id !== userId) {
       await this.notificationService.createNotifForReply(
         `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`,
         parentComment.id
       );
     }
-  
+
     if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
       await this.notificationService.createNotifForMention(
         `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
@@ -132,7 +136,7 @@ export class CommentService {
         mentionedUserId
       );
     }
-  
+
     return savedReply;
   }
 

@@ -38,7 +38,7 @@ export class Folder {
   @JoinColumn()
   admin: Admin;
 
-  @Column({ default: false })  // Default is false for user-created folders
+  @Column({ default: false })  
   isAdmin: boolean;
   
   @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })

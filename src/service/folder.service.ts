@@ -14,9 +14,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import { User } from 'src/user.entity';
-import { Comment
+import {
+  Comment
 
- } from 'src/comment.entity';
+} from 'src/comment.entity';
 import { Admin } from 'src/admin.entity';
 @Injectable()
 export class FolderService {
@@ -27,7 +28,7 @@ export class FolderService {
     private userRepository: Repository<User>,
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
-    
+
 
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
@@ -37,7 +38,7 @@ export class FolderService {
   async createFolder(userId: number, folderData: Partial<Folder>): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...folderData,
-     user: { id: userId }
+      user: { id: userId }
     });
 
     return await this.folderRepository.save(folder);
@@ -48,32 +49,33 @@ export class FolderService {
   //   return await this.folderRepository.find({where :{user: {id:id}}});
   // }
 
-  async getUserFolders(id: number, userId:number): Promise<any[]> {
-    const folders = await this.folderRepository.find({ where: { user: { id:id } },
-    relations:['user']
+  async getUserFolders(id: number, userId: number): Promise<any[]> {
+    const folders = await this.folderRepository.find({
+      where: { user: { id: id } },
+      relations: ['user']
     });
     return Promise.all(folders.map(async (folder) => {
       const commentCount = await this.commentRepository
         .createQueryBuilder('comment')
         .where('comment.folderId = :folderId', { folderId: folder.id })
         .getCount();
-      
+
       return {
         ...folder,
-        commentCount, 
+        commentCount,
       };
     }));
   }
-  
+
 
   // fetch folders and folderdetails
   async getAllFolders(): Promise<Folder[]> {
     return await this.folderRepository.find({ relations: ['user'], });
   }
 
-// async getUserFolder():Promise<Folder[]>{
-//   return await this.folderRepository.find({relations:['user']})
-// }
+  // async getUserFolder():Promise<Folder[]>{
+  //   return await this.folderRepository.find({relations:['user']})
+  // }
 
 
   //edit content
@@ -106,14 +108,14 @@ export class FolderService {
     const folder = await this.folderRepository.findOne({
       where: { id: folderId, user: { id: id } },
     });
-  
+
     if (!folder) {
       throw new Error('Folder not found or you do not have permission to delete this folder');
     }
-  
+
     await this.folderRepository.remove(folder); // Use remove to ensure proper entity deletion
   }
-  
+
   //get folderdetails by ID
   async getFolderDetailsById(id: number): Promise<Folder> {
     return await this.folderRepository.findOne({ where: { id } });
@@ -124,14 +126,14 @@ export class FolderService {
 
 
 
-  
+
   async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...folderData,
       isAdmin: true,  // Mark this folder as created by the admin
       admin: admin,   // Associate the folder with the admin
     });
-  
+
     return await this.folderRepository.save(folder);
   }
 
@@ -141,8 +143,8 @@ export class FolderService {
       where: { isAdmin: true },
     });
   }
-  
-//update adminnote
+
+  //update adminnote
   async updateAdminNote(
     id: number,
     updatedFolderData: Partial<Folder>,
@@ -150,11 +152,11 @@ export class FolderService {
     const folder = await this.folderRepository.findOne({
       where: { id, isAdmin: true },
     });
-  
+
     if (!folder) {
       throw new NotFoundException('Admin folder not found');
     }
-  
+
     Object.assign(folder, updatedFolderData);
     return await this.folderRepository.save(folder);
   }
@@ -165,7 +167,7 @@ export class FolderService {
       id,
       isAdmin: true,
     });
-  
+
     if (result.affected === 0) {
       throw new NotFoundException('Admin folder not found');
     }
@@ -175,13 +177,13 @@ export class FolderService {
     const folder = await this.folderRepository.findOne({
       where: { id, isAdmin: true },
     });
-  
+
     if (!folder) {
       throw new NotFoundException('Admin folder not found');
     }
-  
+
     return folder;
   }
-  
-  
+
+
 }
