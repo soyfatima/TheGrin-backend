@@ -205,7 +205,7 @@ export class CartService {
     return { totalPrice, totalQuantity };
   }
 
-  //   //update cartItem
+  //update cartItem
   async updateCartItem(userId: number, productId: number, updateData: Partial<CartItem>): Promise<CartItem> {
     let cartItem = await this.cartItemRepository.findOne({
       where: { product: { id: productId }, user: { id: userId } },

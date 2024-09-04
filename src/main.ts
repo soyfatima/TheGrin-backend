@@ -38,10 +38,12 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   // Set up logger configuration
+  
   app.useLogger(new Logger());
   app.use('/blog-backend/ProfilPic', express.static('ProfilPic'));
   app.use('/blog-backend/userFile', express.static('userFile'));
   app.use('/blog-backend/adminFile', express.static('adminFile'));
+  app.use('/blog-backend/productFile', express.static('productFile'));
 
   await app.listen(3000);
 }

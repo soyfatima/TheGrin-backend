@@ -24,19 +24,39 @@ export class NotificationService {
   ) { }
 
 
-  async createNotifForComment(message: string, commentId: number): Promise<Notification> {
-    const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
-    if (!comment) {
-        throw new Error('Comment not found');
-    }
+//   async createNotifForComment(message: string, commentId: number): Promise<Notification> {
+//     const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
+//     if (!comment) {
+//         throw new Error('Comment not found');
+//     }
 
-    const notification = new Notification();
-    notification.message = message;
-    notification.comment = comment;
-    notification.user = comment.user; // Notify the owner of the comment
-    notification.folder = comment.folder; // Include the associated folder
+//     const notification = new Notification();
+//     notification.message = message;
+//     notification.comment = comment;
+//     notification.user = comment.user; // Notify the owner of the comment
+//     notification.folder = comment.folder; // Include the associated folder
 
-    return this.notificationRepository.save(notification);
+//     return this.notificationRepository.save(notification);
+// }
+
+async createNotifForComment(userId: number, message: string, commentId: number): Promise<Notification> {
+  const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
+  if (!comment) {
+    throw new Error('Comment not found');
+  }
+
+  const user = await this.userRepository.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const notification = new Notification();
+  notification.message = message;
+  notification.comment = comment;
+  notification.user = user;
+  notification.folder = comment.folder;
+
+  return this.notificationRepository.save(notification);
 }
 
 async createNotifForReply(message: string, commentId: number): Promise<Notification> {
@@ -159,12 +179,6 @@ async markAsRead(id: number): Promise<void> {
       throw new Error('Failed to delete all notifications');
     }
   }
-
-
-
-  // async deleteNotification(id:number): Promise<void>{
-  //  await this.notificationRepository.delete(id)
-  // }
 
   async deleteAllNotifications(): Promise<void> {
     try {

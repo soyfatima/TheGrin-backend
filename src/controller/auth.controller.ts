@@ -253,7 +253,7 @@ export class AuthController {
     };
   }
 
-  //@UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('user/:id')
   async getUserInfo(@Param('id') id: number) {
     const user = await this.authService.getUserInfo(id);

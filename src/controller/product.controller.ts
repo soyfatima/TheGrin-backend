@@ -11,6 +11,7 @@ import { multerOptions } from '../multerOptions';
 import { Product } from "src/product.entity";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Express } from 'express';
+import { ProdFileOptions } from "src/prodFileOption";
 
 
 
@@ -20,7 +21,7 @@ export class ProductController {
 
     @UseGuards(JwtAuthGuard)
     @Post('create')
-    @UseInterceptors(FileInterceptor('uploadedFile'))
+    @UseInterceptors(FileInterceptor('uploadedFile', ProdFileOptions))
     async createProduct(
       @UploadedFile() file,
       @Body() productData: Partial<Product>,

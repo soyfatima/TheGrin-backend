@@ -33,6 +33,7 @@ export class CommentController {
 
   // Add a comment
 
+ 
   @UseGuards(JwtAuthGuard)
   @Post(':folderId')
   async addComment(
@@ -42,12 +43,10 @@ export class CommentController {
   ): Promise<Comment> {
     try {
       const userId = (req.user as { userId: number }).userId;
-      //const isAdmin = req.user.isAdmin;
       const comment = await this.commentService.addComment(
         folderId,
         userId,
         body.content,
-        //isAdmin
       );
 
       return comment;
@@ -56,7 +55,7 @@ export class CommentController {
       throw new BadRequestException('Failed to add comment');
     }
   }
-
+  
   //fetch comments
   @Get('/folder/:folderId')
   async getCommentsByFolderId(@Param('folderId') folderId: number): Promise<Comment[]> {

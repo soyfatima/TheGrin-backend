@@ -74,8 +74,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
-
-
+    
   async validateAdmin(email: string, password: string): Promise<any> {
     if (
       email === this.predefinedEmail &&
@@ -165,66 +164,63 @@ export class AuthService {
   //   }
   // }
 
-
   async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
     try {
       console.log('Attempting login for username:', username);
-
+  
       // Handle admin login
       if (username === this.predefineUsername) {
         console.log('Admin login attempt');
         const admin = await this.adminRepository.findOne({
           where: { username: this.predefineUsername },
         });
-
+  
         console.log('Fetched admin from database:', admin);
-
+  
         if (!admin) {
           throw new UnauthorizedException('Admin user does not exist');
         }
-
+  
         // Compare the password
         const isPasswordValid = password === this.predefineAdminPassword;
         console.log('Password validity for admin:', isPasswordValid);
-
+  
         if (!isPasswordValid) {
           throw new UnauthorizedException('Invalid username or password');
         }
-
-        return { user: admin, role: 'admin' };
+  
+        return { user: admin, role: 'admin' }; // Role should be 'admin'
       }
-
+  
       // Handle regular user login
       const user = await this.userRepository.findOne({
         where: { username }
       });
-
+  
       console.log('Fetched user from database:', user);
-
+  
       if (!user) {
         throw new UnauthorizedException('Invalid username or password');
       }
-
+  
       if (user.blocked) {
         throw new UnauthorizedException('User is blocked');
       }
-
+  
       const isPasswordValid = await user.comparePassword(password);
       console.log('Password validity for user:', isPasswordValid);
-
+  
       if (!isPasswordValid) {
         throw new UnauthorizedException('Invalid username or password');
       }
-
-      return { user, role: 'user' };
+  
+      return { user, role: 'user' }; // Role should be 'user'
     } catch (error) {
       console.error('Error during login:', error.message);
       throw new UnauthorizedException(error.message);
     }
   }
-
-
-
+  
 
 
   async logout(accessToken: string): Promise<void> {

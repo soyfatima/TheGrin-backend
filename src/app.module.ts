@@ -35,6 +35,8 @@ import { NotificationController } from './controller/notification.controller';
 import { NotificationService } from './service/notification.service';
 import { Notification } from './notif.entity';
 import { adminFileOptions } from './adminFileOption';
+import multer from 'multer';
+import { ProdFileOptions } from './prodFileOption';
 
 @Module({
   imports: [
@@ -52,6 +54,7 @@ import { adminFileOptions } from './adminFileOption';
     MulterModule.register(multerOptions),
     MulterModule.register(folderFileOptions),
     MulterModule.register(adminFileOptions),
+    MulterModule.register(ProdFileOptions),
     TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification]),
     JwtModule.register({
       secret: jwtConfig.secret,

@@ -5,6 +5,7 @@ import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
 import { NotificationService } from './notification.service';
+import { Admin } from 'src/admin.entity';
 
 @Injectable()
 export class CommentService {
@@ -21,48 +22,89 @@ export class CommentService {
   ) { }
 
 
+  // async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
+  //   try {
+  //     // Fetch user and folder, including the user relation in the folder
+  //     const user = await this.userRepository.findOne({ where: { id: userId } });
+  //     const folder = await this.folderRepository.findOne({ 
+  //       where: { id: folderId },
+  //       relations: ['user'],  // Ensure the 'user' relation is loaded
+  //     });
+  
+  //     if (!user || !folder) {
+  //       console.error('User or Folder not found', { userId, folderId });
+  //       throw new Error('User or Folder not found');
+  //     }
+  
+  //     // Create and save the comment
+  //     const comment = new Comment();
+  //     comment.content = content;
+  //     comment.user = user;
+  //     comment.folder = folder;
+  
+  //     const savedComment = await this.commentRepository.save(comment);
+  
+  //     // Notify other users (excluding the folder owner) about the new comment
+  //     if (folder.user.id !== userId) {
+  //       const userName = user.username;
+  //       const folderName = folder.category;
+  
+  //       await this.notificationService.createNotifForComment(
+  //         `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
+  //         savedComment.id
+  //       );
+  //     }
+  
+  //     return savedComment;
+  //   } catch (error) {
+  //     console.error('Error in addComment:', error);
+  //     throw error;
+  //   }
+  // }
+
+
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
     try {
-
+      // Fetch user and folder, including the user relation in the folder
       const user = await this.userRepository.findOne({ where: { id: userId } });
-      const folder = await this.folderRepository.findOne({
+      const folder = await this.folderRepository.findOne({ 
         where: { id: folderId },
-        relations: ['user'],
+        relations: ['user'],  // Ensure the 'user' relation is loaded
       });
-
+  
       if (!user || !folder) {
+        console.error('User or Folder not found', { userId, folderId });
         throw new Error('User or Folder not found');
       }
-
-      if (user.blocked) {
-        throw new Error('User is blocked and cannot leave comments');
-      }
-
-
+  
+      // Create and save the comment
       const comment = new Comment();
       comment.content = content;
       comment.user = user;
       comment.folder = folder;
+  
       const savedComment = await this.commentRepository.save(comment);
-
+  
+      // Notify the folder owner about the new comment
       if (folder.user.id !== userId) {
-          const userName = user.username;
+        const userName = user.username;
         const folderName = folder.category;
-
+        
+        // Notify only the owner of the folder
         await this.notificationService.createNotifForComment(
+          folder.user.id, // Notify the owner of the folder
           `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
           savedComment.id
         );
       }
-
+  
       return savedComment;
     } catch (error) {
       console.error('Error in addComment:', error);
       throw error;
     }
   }
-
-
+  
 
 
   //fetch comments

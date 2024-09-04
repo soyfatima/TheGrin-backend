@@ -56,12 +56,7 @@ export class NotificationController {
     async markAsRead(@Param('id') id: number): Promise<void> {
         await this.notificationService.markAsRead(id);
     }
-    // @UseGuards(JwtAuthGuard)
-    // @Delete(':id')
-    // async deleteNotification(
-    //     @Param('id') id: number): Promise<void> {
-    //     await this.notificationService.deleteNotification(id);
-    // }
+    
 
     // @UseGuards(JwtAuthGuard)
     // @Delete('')

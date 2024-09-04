@@ -4,7 +4,8 @@ import { CartItem } from "src/cart-item.entity";
 import { Cart } from "src/cart.entity";
 import { Order } from "src/order.entity";
 import { Repository } from "typeorm";
-
+import { NotificationService } from "./notification.service";
+import { Notification } from "src/notif.entity";
 @Injectable()
 export class OrderService {
   constructor(
@@ -14,6 +15,7 @@ export class OrderService {
     private readonly cartItemRepository: Repository<CartItem>,
     @InjectRepository(Cart)
     private cartRepository: Repository<Cart>,
+    private notificationService: NotificationService,
   ) { }
 
 
@@ -35,9 +37,8 @@ export class OrderService {
         throw new Error('Les items de panier n\'ont pas été trouvés');
       }
 
-      // Calculer le montant total de la commande globale
       const totalAmount = cartItems.reduce((sum, item) => {
-        const productPrice = parseFloat(item.product.price.replace(/,/g, ''));
+        const productPrice = parseFloat(item.product.price.replace(/\./g, '').replace(',', '.'));
         return sum + (productPrice * item.quantity);
       }, 0);
 
@@ -52,6 +53,9 @@ export class OrderService {
       });
 
       const savedOrder = await this.orderRepository.save(newOrder);
+      await this.notificationService.createNotifForOrder(`Nouvelle commande par ${orderData.username}, 
+        adresse: ${orderData.address}, 
+        tel: ${orderData.phoneNumber}`, newOrder.id);
 
       return savedOrder;
     } catch (error) {
@@ -105,7 +109,7 @@ export class OrderService {
     }
 
     const totalAmount = cartItems.reduce((sum, item) => {
-      const productPrice = parseFloat(item.product.price.replace(/,/g, ''));
+      const productPrice = parseFloat(item.product.price.replace(/\./g, '').replace(',', '.'));
       return sum + (productPrice * item.quantity);
     }, 0);
 
@@ -117,6 +121,11 @@ export class OrderService {
     });
 
     const savedOrder = await this.orderRepository.save(userOrder);
+    await this.notificationService.createNotifForOrder(`Nouvelle commande par ${orderData.username}, 
+        adresse: ${orderData.address}, 
+        tel: ${orderData.phoneNumber}`,
+      userOrder.id);
+
     return savedOrder;
   }
 
@@ -132,8 +141,19 @@ export class OrderService {
     }
   }
 
+  async findOrderById(id: number): Promise<Order> {
+    return this.orderRepository.findOne({
+      where: { id },
+      relations: ['items'],
+    });
+  }
+
   //delete
   async deleteOrder(id: number): Promise<void> {
     await this.orderRepository.delete(id);
+  }
+
+  async DeleteAllOrder(): Promise<void> {
+    await this.orderRepository.delete({})
   }
 }

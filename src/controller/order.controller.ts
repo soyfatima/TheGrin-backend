@@ -16,8 +16,6 @@ import { OrderService } from "src/service/order.service";
 import { Order } from "src/order.entity";
 import { CartItem } from "src/cart-item.entity";
 
-
-
 @Controller('orders')
 export class OrderController {
   constructor(private OrderService: OrderService) { }
