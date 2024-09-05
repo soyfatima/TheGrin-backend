@@ -18,10 +18,10 @@ export class CartItem {
 
   @ManyToOne(() => Product, product => product.cartItems, { eager: true })
   product: Product;
-
-  @ManyToOne(type => Order, order => order.items)
-  order: Order;
   
+  @ManyToOne(() => Order, order => order.items, { onDelete: 'CASCADE' })
+  order: Order;
+
   @Column()
   quantity: number;
 

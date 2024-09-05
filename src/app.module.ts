@@ -63,7 +63,7 @@ import { ProdFileOptions } from './prodFileOption';
 
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.example.com',
+        host: 'smtp.gmail.com',
         port: 587,
         secure: false, // true for 465, false for other ports
         auth: {

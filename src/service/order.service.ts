@@ -16,6 +16,8 @@ export class OrderService {
     @InjectRepository(Cart)
     private cartRepository: Repository<Cart>,
     private notificationService: NotificationService,
+    @InjectRepository(Notification)
+    private readonly notificationRepository: Repository<Notification>,
   ) { }
 
 
@@ -156,4 +158,16 @@ export class OrderService {
   async DeleteAllOrder(): Promise<void> {
     await this.orderRepository.delete({})
   }
+  async deleteAllOrderNotifications(): Promise<void> {
+    try {
+      await this.notificationRepository.delete({});
+    } catch (error) {
+      console.error('Error deleting all order notifications:', error);
+      throw new Error('Failed to delete all order notifications');
+    }
+  }
+
+
+
+
 }

@@ -47,7 +47,7 @@ export class AuthService {
 
   generateRefreshToken(user: User | Admin): string {
     const payload = { userId: user.id };
-    const options = { expiresIn: '7d' };
+    const options = { expiresIn: '1d' };
     const token = this.jwtService.sign(payload, options);
     return token;
   }
@@ -166,16 +166,11 @@ export class AuthService {
 
   async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
     try {
-      console.log('Attempting login for username:', username);
-  
       // Handle admin login
       if (username === this.predefineUsername) {
-        console.log('Admin login attempt');
         const admin = await this.adminRepository.findOne({
           where: { username: this.predefineUsername },
         });
-  
-        console.log('Fetched admin from database:', admin);
   
         if (!admin) {
           throw new UnauthorizedException('Admin user does not exist');
@@ -183,8 +178,6 @@ export class AuthService {
   
         // Compare the password
         const isPasswordValid = password === this.predefineAdminPassword;
-        console.log('Password validity for admin:', isPasswordValid);
-  
         if (!isPasswordValid) {
           throw new UnauthorizedException('Invalid username or password');
         }
@@ -197,8 +190,6 @@ export class AuthService {
         where: { username }
       });
   
-      console.log('Fetched user from database:', user);
-  
       if (!user) {
         throw new UnauthorizedException('Invalid username or password');
       }
@@ -208,7 +199,6 @@ export class AuthService {
       }
   
       const isPasswordValid = await user.comparePassword(password);
-      console.log('Password validity for user:', isPasswordValid);
   
       if (!isPasswordValid) {
         throw new UnauthorizedException('Invalid username or password');
@@ -310,7 +300,6 @@ export class AuthService {
   }
 
   async getAdminInfo(id: number): Promise<Admin> {
-    console.log('get admin info', id)
     const admin = await this.adminRepository.findOne({ where: { id: id } })
 
     if (!admin) {

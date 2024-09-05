@@ -113,9 +113,8 @@ export class CommentService {
       const comments = await this.commentRepository.find({
         where: { folder: { id: folderId } },
         relations: ['user', 'replies', 'replies.user'],
-        order: { createdAt: 'ASC' }, // Optionally sort comments by creation date
+        order: { createdAt: 'ASC' }, 
       });
-      //   console.log('Fetched Comments:', JSON.stringify(comments, null, 2));
       return comments;
     } catch (error) {
       console.error('Error fetching comments:', error.message);

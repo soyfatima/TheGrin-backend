@@ -128,12 +128,25 @@ async createNotifForMention(message: string, commentId: number, mentionedUserId:
     return this.notificationRepository.save(notification);
   }
 
-  async getAllNotifications(userId: number): Promise<Notification[]> {
+
+  async getOrderNotification(userId:number): Promise<Notification[]> {
+   try{
+    return await this.notificationRepository.find({
+      where:{user :{id:userId}},
+      relations: ['order', 'user'],
+      order: { createdAt: 'DESC' },
+    });
+   }catch(error) {
+    console.error('Failed to fetch notifications:', error);
+    throw new Error('Unable to fetch notifications');
+   }
+  }
+
+  async getAllUserNotifications(userId: number): Promise<Notification[]> {
     try {
       return await this.notificationRepository.find({
         where: { user: { id: userId } }, // Filter by user ID
-        relations: ['order', 'comment', 'comment.user', 'comment.folder', 'user'],
-        order: { createdAt: 'DESC' },
+        relations: ['comment', 'comment.user', 'comment.folder', 'user'],
       });
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -143,7 +156,7 @@ async createNotifForMention(message: string, commentId: number, mentionedUserId:
 
 
   // notification.service.ts (or equivalent service)
-async getNotificationById(notificationId: number): Promise<Notification> {
+async getUserNotificationById(notificationId: number): Promise<Notification> {
   return await this.notificationRepository.findOne({
     where: { id: notificationId },
     relations: ['folder', 'comment'] // Ensure related entities are included
@@ -173,19 +186,24 @@ async markAsRead(id: number): Promise<void> {
 
   async deleteAllUserNotifications(userId: number): Promise<void> {
     try {
-      await this.notificationRepository.delete({ user: { id: userId } }); // Delete all notifications for this user
+      await this.notificationRepository.delete({ user: { id: userId } }); 
     } catch (error) {
       console.error('Error deleting all notifications:', error);
       throw new Error('Failed to delete all notifications');
     }
   }
 
-  async deleteAllNotifications(): Promise<void> {
+
+  async deleteOrderNotification(id: number): Promise<void> {
+    await this.notificationRepository.delete(id)
+  }
+
+  async deleteAllOrderNotifications(): Promise<void> {
     try {
       await this.notificationRepository.delete({});
     } catch (error) {
-      console.error('Error deleting all notifications:', error);
-      throw new Error('Failed to delete all notifications');
+      console.error('Error deleting all order notifications:', error);
+      throw new Error('Failed to delete all order notifications');
     }
   }
 

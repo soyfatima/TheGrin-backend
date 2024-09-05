@@ -4,7 +4,9 @@ import {
   Controller, Request, HttpException, HttpStatus, Post, Put, UploadedFile, UseGuards, UseInterceptors,
   Delete,
   Get,
-  Query
+  Query,
+  NotFoundException,
+  Req
 } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ProductService } from "src/service/product.service";
@@ -15,6 +17,8 @@ import { Express } from 'express';
 import { OrderService } from "src/service/order.service";
 import { Order } from "src/order.entity";
 import { CartItem } from "src/cart-item.entity";
+
+
 
 @Controller('orders')
 export class OrderController {
@@ -53,8 +57,18 @@ export class OrderController {
       return [];
     }
   }
+  
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getOrderById(@Param('id') id: number): Promise<Order> {
+    const order = await this.OrderService.findOrderById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    return order;
+  }
 
-  //delete Product
+  //delete Order
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async deleteOrder(
@@ -62,4 +76,24 @@ export class OrderController {
       await this.OrderService.deleteOrder(id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Delete('') 
+  public async DeleteAllOrder(@Req() req: Request) {
+      try {
+          return await this.OrderService.DeleteAllOrder(); 
+        } catch (error) {
+         // throw ErrorHandlerHelper.errorHandler(error, req);
+        }
+      }
+
+      
+    @UseGuards(JwtAuthGuard)
+    @Delete('')
+    public async deleteAllOrderNotifications(@Req() req: Request) {
+        try {
+            return await this.OrderService.deleteAllOrderNotifications();
+        } catch (error) {
+            // throw ErrorHandlerHelper.errorHandler(error, req);
+        }
+    }
 }

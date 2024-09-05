@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
 import { User } from './user.entity';
 import { CartItem } from './cart-item.entity';
 
@@ -24,4 +24,7 @@ export class Order {
   
   @Column({ type: 'numeric' })
   totalAmount: number;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

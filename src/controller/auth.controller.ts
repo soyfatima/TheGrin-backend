@@ -62,8 +62,6 @@ export class AuthController {
 
       await this.authService.refreshAccessToken(refreshToken);
 
-    console.log(newAccessToken, 'new access token')
-
     return { accessToken: newAccessToken };
   }
 
@@ -87,6 +85,7 @@ export class AuthController {
       secure: false,
       sameSite: 'strict',
     });
+
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false,
@@ -125,41 +124,6 @@ export class AuthController {
     }
   }
 
-  //user login
-  // @Post('userLogin')
-  // async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
-  //   const { username, password } = userLoginDto;
-  //   try {
-  //     const { user, role } = await this.authService.userLogin(username, password);
-  //     if (!user) {
-  //       throw new UnauthorizedException('Invalid credentials');
-  //     }
-
-  //     const accessToken = this.authService.generateAccessToken(user);
-  //     const refreshToken = this.authService.generateRefreshToken(user);
-
-  //     console.log(accessToken, 'accesstoken'),
-  //     console.log(refreshToken, 'refreshtoken'),
-
-  //     // Set tokens as cookies in the response
-  //     res.cookie('accessToken', accessToken, {
-  //       httpOnly: true,
-  //       secure: false,
-  //       sameSite: 'strict',
-  //     });
-  //     res.cookie('refreshToken', refreshToken, {
-  //       httpOnly: true,
-  //       secure: false,
-  //       sameSite: 'strict',
-  //     });
-
-  //     res.status(200).send({ accessToken, refreshToken, userInfo: user, role });
-  //   } catch (error) {
-  //     console.error('Error during login:', error.message);
-  //     res.status(400).send({ message: error.message });
-  //   }
-  // }
-
   @Post('userLogin')
   async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
     const { username, password } = userLoginDto;
@@ -172,9 +136,6 @@ export class AuthController {
 
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
-
-      console.log('Access Token:', accessToken);
-      console.log('Refresh Token:', refreshToken);
 
       // Set tokens as cookies in the response
       res.cookie('accessToken', accessToken, {
@@ -271,7 +232,7 @@ export class AuthController {
     }
     return admin; // Return the admin data here
   }
-  
+
 
 
   @Patch('blockUser')
@@ -280,7 +241,6 @@ export class AuthController {
     @Body() body: { blocked: boolean },
     @Res() res: Response
   ) {
-    console.log('Received request to block/unblock user:', { id, blocked: body.blocked });
     try {
       const user = await this.authService.blockUser(id, body.blocked);
       res.status(200).send(user);
