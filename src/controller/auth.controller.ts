@@ -140,12 +140,12 @@ export class AuthController {
       // Set tokens as cookies in the response
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: false, // Set to true if using HTTPS
+        secure: false,
         sameSite: 'strict',
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: false, // Set to true if using HTTPS
+        secure: false,
         sameSite: 'strict',
       });
 
@@ -186,66 +186,6 @@ export class AuthController {
       res.status(200).send();
     } catch (error) {
       console.error('Error during logout:', error.message);
-      res.status(400).send({ message: error.message });
-    }
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Put(':id/update')
-  @UseInterceptors(FileInterceptor('uploadedFile', multerOptions))
-  async updateUserInfo(
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req,
-    @Param('id', ParseIntPipe) userId: number,
-    @Body('username') username?: string,
-  ) {
-    const id = (req.user as { userId: number }).userId;
-    if (id !== userId) {
-      throw new Error('Unauthorized');
-    }
-
-    const uploadedFile = file ? file.filename : null;
-    const updatedUser = await this.authService.updateUserInfo(userId, username, uploadedFile);
-
-    return {
-      ...updatedUser,
-      updatedFileName: uploadedFile,
-
-    };
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('user/:id')
-  async getUserInfo(@Param('id') id: number) {
-    const user = await this.authService.getUserInfo(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
-  }
-
-  @Get('admin/:id')
-  async getAdminInfo(@Param('id') id: number) {
-    const admin = await this.authService.getAdminInfo(id);
-    if (!admin) {
-      throw new NotFoundException('Admin not found');
-    }
-    return admin; // Return the admin data here
-  }
-
-
-
-  @Patch('blockUser')
-  async blockUser(
-    @Param('id') id: number,
-    @Body() body: { blocked: boolean },
-    @Res() res: Response
-  ) {
-    try {
-      const user = await this.authService.blockUser(id, body.blocked);
-      res.status(200).send(user);
-    } catch (error) {
-      console.error('Error blocking user:', error.message);
       res.status(400).send({ message: error.message });
     }
   }

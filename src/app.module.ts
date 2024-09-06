@@ -37,6 +37,8 @@ import { Notification } from './notif.entity';
 import { adminFileOptions } from './adminFileOption';
 import multer from 'multer';
 import { ProdFileOptions } from './prodFileOption';
+import { UserController } from './controller/user.controller';
+import { UserService } from './service/user.service';
 
 @Module({
   imports: [
@@ -87,7 +89,8 @@ import { ProdFileOptions } from './prodFileOption';
     ProductController,
     OrderController,
     CartController,
-    NotificationController
+    NotificationController,
+    UserController
   ],
   providers: [
     AppService,
@@ -98,7 +101,8 @@ import { ProdFileOptions } from './prodFileOption';
     ProductService,
     OrderService,
     CartService,
-    NotificationService
+    NotificationService,
+    UserService,
   ],
 })
 export class AppModule { }
