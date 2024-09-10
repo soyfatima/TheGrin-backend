@@ -26,6 +26,7 @@ import {
   import { multerOptions } from '../multerOptions';
   import * as path from 'path';
 import { UserService } from 'src/service/user.service';
+import { User } from 'src/user.entity';
 
   
   @Controller('users')
@@ -89,10 +90,10 @@ import { UserService } from 'src/service/user.service';
       return admin; // Return the admin data here
     }
   
-  
-  
-    @Patch('blockUser')
-    async blockUser(
+    @UseGuards(JwtAuthGuard)
+   // @Patch('blockUser')
+   @Patch('blockUser/:id') 
+   async blockUser(
       @Param('id') id: number,
       @Body() body: { blocked: boolean },
       @Res() res: Response
@@ -106,4 +107,10 @@ import { UserService } from 'src/service/user.service';
       }
     }
   
+    @UseGuards(JwtAuthGuard)
+@Get('GetAllUser')
+async getAllUser(): Promise<User[]> {
+  return await this.userService.getAllUser()
+}
+
 }

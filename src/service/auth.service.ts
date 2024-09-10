@@ -146,24 +146,6 @@ export class AuthService {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  // async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
-  //   try {
-  //     const user = await this.userRepository.findOne({ where: { username } });
-  //     if (!user) {
-  //       throw new UnauthorizedException('Invalid username or password');
-  //     }
-  //     // Compare the password
-  //     const isPasswordValid = await user.comparePassword(password);
-  //     if (!isPasswordValid) {
-  //       throw new UnauthorizedException('Invalid username or password');
-  //     }
-  //     return { user, role: 'user' };
-  //   } catch (error) {
-  //     console.error('Error during login:', error.message);
-  //     throw new UnauthorizedException(error.message);
-  //   }
-  // }
-
   async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
     try {
       // Handle admin login
