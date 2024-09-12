@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { Comment } from './comment.entity';
 import { Admin } from './admin.entity';
+import { UserNoteReadStatus } from './noteread.entity';
 
 @Entity({ name: 'folders' })
 export class Folder {
@@ -43,11 +44,15 @@ export class Folder {
   
   @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
   comments: Comment[];
-
+  
+  @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.folder, { cascade: true, eager: true })
+  noteReadStatus: UserNoteReadStatus[];
+  
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
+  
 }

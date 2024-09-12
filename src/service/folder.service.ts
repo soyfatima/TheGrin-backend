@@ -1,6 +1,9 @@
 import {
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -19,6 +22,7 @@ import {
 
 } from 'src/comment.entity';
 import { Admin } from 'src/admin.entity';
+import { UserNoteReadStatus } from 'src/noteread.entity';
 @Injectable()
 export class FolderService {
   constructor(
@@ -28,8 +32,8 @@ export class FolderService {
     private userRepository: Repository<User>,
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
-
-
+    @InjectRepository(UserNoteReadStatus)
+    private userNoteReadStatusRepository: Repository<UserNoteReadStatus>,
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
   ) { }
@@ -72,10 +76,6 @@ export class FolderService {
   async getAllFolders(): Promise<Folder[]> {
     return await this.folderRepository.find({ relations: ['user'], });
   }
-
-  // async getUserFolder():Promise<Folder[]>{
-  //   return await this.folderRepository.find({relations:['user']})
-  // }
 
 
   //edit content
@@ -122,25 +122,50 @@ export class FolderService {
   }
 
 
+  /////////////////////
+  /////////admin note
 
+  // async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
+  //   const folder = this.folderRepository.create({
+  //     ...folderData,
+  //     isAdmin: true,  // Mark this folder as created by the admin
+  //     admin: admin,   // Associate the folder with the admin
+  //   });
 
-
+  //   return await this.folderRepository.save(folder);
+  // }
 
 
   async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
     const folder = this.folderRepository.create({
       ...folderData,
-      isAdmin: true,  // Mark this folder as created by the admin
-      admin: admin,   // Associate the folder with the admin
+      isAdmin: true,
+      admin: admin,
     });
 
-    return await this.folderRepository.save(folder);
-  }
+    const savedFolder = await this.folderRepository.save(folder);
 
+    const allUsers = await this.userRepository.find();
+
+    if (allUsers && allUsers.length > 0) {
+      const noteReadStatuses = allUsers.map(user => ({
+        folder: savedFolder,
+        user: user,
+        read: false,
+      }));
+
+      await this.userNoteReadStatusRepository.save(noteReadStatuses);
+    } else {
+      console.warn('Aucun utilisateur trouvé pour initialiser le statut de lecture');
+    }
+
+    return savedFolder;
+  }
 
   async getAllAdminNote(): Promise<Folder[]> {
     return await this.folderRepository.find({
       where: { isAdmin: true },
+      relations: ['noteReadStatus', 'noteReadStatus.user'],
     });
   }
 
@@ -185,5 +210,21 @@ export class FolderService {
     return folder;
   }
 
+  async markNoteAsRead(noteId: number, userId: number): Promise<void> {
+    const noteReadStatus = await this.userNoteReadStatusRepository.findOne({
+      where: {
+        folder: { id: noteId },
+        user: { id: userId },
+      },
+    });
+
+    if (noteReadStatus) {
+      noteReadStatus.read = true;
+      await this.userNoteReadStatusRepository.save(noteReadStatus);
+    } else {
+      console.warn('Aucun statut de lecture trouvé pour la noteId:', noteId, 'userId:', userId);
+      throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
+    }
+  }
 
 }

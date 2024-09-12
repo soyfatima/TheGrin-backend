@@ -198,13 +198,13 @@ async markAsRead(id: number): Promise<void> {
     await this.notificationRepository.delete(id)
   }
 
-  async deleteAllOrderNotifications(): Promise<void> {
-    try {
-      await this.notificationRepository.delete({});
-    } catch (error) {
-      console.error('Error deleting all order notifications:', error);
-      throw new Error('Failed to delete all order notifications');
-    }
-  }
+  // async deleteAllOrderNotifications(): Promise<void> {
+  //   try {
+  //     await this.notificationRepository.delete({});
+  //   } catch (error) {
+  //     console.error('Error deleting all order notifications:', error);
+  //     throw new Error('Failed to delete all order notifications');
+  //   }
+  // }
 
 }

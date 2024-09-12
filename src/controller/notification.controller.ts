@@ -80,14 +80,14 @@ export class NotificationController {
         await this.notificationService.deleteOrderNotification(id);
     }
     
-    @UseGuards(JwtAuthGuard)
-    @Delete('')
-    public async deleteAllOrderNotifications(@Req() req: Request) {
-        try {
-            return await this.notificationService.deleteAllOrderNotifications();
-        } catch (error) {
-            // throw ErrorHandlerHelper.errorHandler(error, req);
-        }
-    }
+    // @UseGuards(JwtAuthGuard)
+    // @Delete('')
+    // public async deleteAllOrderNotifications(@Req() req: Request) {
+    //     try {
+    //         return await this.notificationService.deleteAllOrderNotifications();
+    //     } catch (error) {
+    //         // throw ErrorHandlerHelper.errorHandler(error, req);
+    //     }
+    // }
 
 }

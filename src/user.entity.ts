@@ -15,9 +15,11 @@ import { Cart } from './cart.entity';
 import { Order } from './order.entity';
 import { CartItem } from './cart-item.entity';
 import { Folder } from './folder.entity';
+import { UserNoteReadStatus } from './noteread.entity';
 
 @Entity({ name: 'users' }) 
 export class User {
+
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -75,7 +77,11 @@ export class User {
 
   @OneToMany(() => CartItem, cartItem => cartItem.user)
   cartItems: CartItem[];
-
+  
+  @OneToMany(() => UserNoteReadStatus, userNoteReadStatus => userNoteReadStatus.user)
+  noteReadStatus: UserNoteReadStatus[];
+  
   @Column({ type: 'boolean', default: false })
   blocked: boolean;
+
 }

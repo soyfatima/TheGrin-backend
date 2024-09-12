@@ -158,15 +158,19 @@ export class OrderService {
   async DeleteAllOrder(): Promise<void> {
     await this.orderRepository.delete({})
   }
+
   async deleteAllOrderNotifications(): Promise<void> {
+    console.log('error lors de la suppression');
     try {
       await this.notificationRepository.delete({});
+      console.log('All notifications deleted successfully');
+      return; // You can return void or a message
     } catch (error) {
       console.error('Error deleting all order notifications:', error);
       throw new Error('Failed to delete all order notifications');
     }
   }
-
+  
 
 
 

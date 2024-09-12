@@ -39,6 +39,7 @@ import multer from 'multer';
 import { ProdFileOptions } from './prodFileOption';
 import { UserController } from './controller/user.controller';
 import { UserService } from './service/user.service';
+import { UserNoteReadStatus } from './noteread.entity';
 
 @Module({
   imports: [
@@ -49,7 +50,7 @@ import { UserService } from './service/user.service';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus],
       synchronize: true,
     }),
 
@@ -57,7 +58,7 @@ import { UserService } from './service/user.service';
     MulterModule.register(folderFileOptions),
     MulterModule.register(adminFileOptions),
     MulterModule.register(ProdFileOptions),
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification]),
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15m' },
