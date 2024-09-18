@@ -38,7 +38,7 @@ export class CartService {
 
       return savedCart;
     } catch (error) {
-      console.error('Erreur lors de la création du panier pour l\'utilisateur:', error.message);
+     // console.error('Erreur lors de la création du panier pour l\'utilisateur:', error.message);
       throw new InternalServerErrorException('Échec de la création du panier pour l\'utilisateur');
     }
   }
@@ -105,7 +105,7 @@ export class CartService {
       if (error.code === '23505') { // PostgreSQL unique violation error code
         throw new Error('Item already in cart');
       }
-      console.error('Error adding product to cart:', error.message);
+      //console.error('Error adding product to cart:', error.message);
       throw error;
     }
   }
@@ -142,10 +142,9 @@ export class CartService {
       return savedCartItem;
     } catch (error) {
       if (error.code === '23505') { 
-        console.error('Error adding product to cart: Item already in cart');
         throw new Error('Item already in cart');
       }
-      console.error('Error adding product to cart:', error.message);
+//      console.error('Error adding product to cart:', error.message);
       throw error;
     }
   }
@@ -289,7 +288,7 @@ export class CartService {
       const updatedCart = await this.cartRepository.save(cart);
       return updatedCart;
     } catch (error) {
-      console.error('Error removing product from cart:', error.message);
+     // console.error('Error removing product from cart:', error.message);
       throw error;
     }
   }

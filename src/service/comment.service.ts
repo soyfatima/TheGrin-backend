@@ -17,63 +17,18 @@ export class CommentService {
     @InjectRepository(Folder)
     private folderRepository: Repository<Folder>,
     private notificationService: NotificationService,
-
-
   ) { }
-
-
-  // async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
-  //   try {
-  //     // Fetch user and folder, including the user relation in the folder
-  //     const user = await this.userRepository.findOne({ where: { id: userId } });
-  //     const folder = await this.folderRepository.findOne({ 
-  //       where: { id: folderId },
-  //       relations: ['user'],  // Ensure the 'user' relation is loaded
-  //     });
-  
-  //     if (!user || !folder) {
-  //       console.error('User or Folder not found', { userId, folderId });
-  //       throw new Error('User or Folder not found');
-  //     }
-  
-  //     // Create and save the comment
-  //     const comment = new Comment();
-  //     comment.content = content;
-  //     comment.user = user;
-  //     comment.folder = folder;
-  
-  //     const savedComment = await this.commentRepository.save(comment);
-  
-  //     // Notify other users (excluding the folder owner) about the new comment
-  //     if (folder.user.id !== userId) {
-  //       const userName = user.username;
-  //       const folderName = folder.category;
-  
-  //       await this.notificationService.createNotifForComment(
-  //         `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
-  //         savedComment.id
-  //       );
-  //     }
-  
-  //     return savedComment;
-  //   } catch (error) {
-  //     console.error('Error in addComment:', error);
-  //     throw error;
-  //   }
-  // }
-
 
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
     try {
-      // Fetch user and folder, including the user relation in the folder
       const user = await this.userRepository.findOne({ where: { id: userId } });
       const folder = await this.folderRepository.findOne({ 
         where: { id: folderId },
-        relations: ['user'],  // Ensure the 'user' relation is loaded
+        relations: ['user'], 
       });
   
       if (!user || !folder) {
-        console.error('User or Folder not found', { userId, folderId });
+      //  console.error('User or Folder not found', { userId, folderId });
         throw new Error('User or Folder not found');
       }
   
@@ -88,7 +43,7 @@ export class CommentService {
       // Notify the folder owner about the new comment
       if (folder.user.id !== userId) {
         const userName = user.username;
-        const folderName = folder.category;
+        const folderName = folder.title;
         
         // Notify only the owner of the folder
         await this.notificationService.createNotifForComment(
@@ -100,7 +55,7 @@ export class CommentService {
   
       return savedComment;
     } catch (error) {
-      console.error('Error in addComment:', error);
+     // console.error('Error in addComment:', error);
       throw error;
     }
   }
@@ -117,7 +72,7 @@ export class CommentService {
       });
       return comments;
     } catch (error) {
-      console.error('Error fetching comments:', error.message);
+     // console.error('Error fetching comments:', error.message);
       throw new Error('Failed to fetch comments');
     }
   }
@@ -157,7 +112,7 @@ export class CommentService {
 
     if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
       await this.notificationService.createNotifForFolder(
-        `Nouveau commentaire de ${replier?.username} sur votre dossier ${parentComment.folder.category}`,
+        `Nouveau commentaire de ${replier?.username} sur votre poste ${parentComment.folder.title}`,
         parentComment.folder.id,
         parentComment.folder.user.id
       );
@@ -198,6 +153,7 @@ export class CommentService {
     comment.content = content;
     await this.commentRepository.save(comment);
     return comment;
+    
   }
 
   async deleteComment(commentId: number, userId: number): Promise<void> {

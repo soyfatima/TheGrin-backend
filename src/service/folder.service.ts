@@ -48,10 +48,6 @@ export class FolderService {
     return await this.folderRepository.save(folder);
   }
 
-  // fetch folders and folderdetails
-  // async getUserFolders(id:number): Promise<Folder[]> {
-  //   return await this.folderRepository.find({where :{user: {id:id}}});
-  // }
 
   async getUserFolders(id: number, userId: number): Promise<any[]> {
     const folders = await this.folderRepository.find({
@@ -124,17 +120,6 @@ export class FolderService {
 
   /////////////////////
   /////////admin note
-
-  // async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
-  //   const folder = this.folderRepository.create({
-  //     ...folderData,
-  //     isAdmin: true,  // Mark this folder as created by the admin
-  //     admin: admin,   // Associate the folder with the admin
-  //   });
-
-  //   return await this.folderRepository.save(folder);
-  // }
-
 
   async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
     const folder = this.folderRepository.create({
@@ -222,7 +207,7 @@ export class FolderService {
       noteReadStatus.read = true;
       await this.userNoteReadStatusRepository.save(noteReadStatus);
     } else {
-      console.warn('Aucun statut de lecture trouvé pour la noteId:', noteId, 'userId:', userId);
+    //  console.warn('Aucun statut de lecture trouvé pour la noteId:', noteId, 'userId:', userId);
       throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
     }
   }

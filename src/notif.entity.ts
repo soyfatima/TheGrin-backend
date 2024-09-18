@@ -3,6 +3,7 @@ import { Order } from './order.entity';
 import { Comment } from './comment.entity';
 import { User } from './user.entity';
 import { Folder } from './folder.entity';
+
 @Entity()
 export class Notification {
   @PrimaryGeneratedColumn()
@@ -14,9 +15,9 @@ export class Notification {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => Order, { nullable: true })
+  @ManyToOne(() => Order, { nullable: true, onDelete: 'CASCADE' })
   order: Order;
- 
+  
   @Column({ type: 'boolean', default: false })
   read: boolean;
   

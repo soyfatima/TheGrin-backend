@@ -25,7 +25,6 @@ export class OrderService {
     try {
       const userCart = await this.cartRepository.findOne({ where: { user: { id: userId } } });
       if (!userCart) {
-        console.error('Le panier de l\'utilisateur n\'a pas été trouvé');
         throw new Error('Le panier de l\'utilisateur n\'a pas été trouvé');
       }
 
@@ -35,7 +34,6 @@ export class OrderService {
       });
 
       if (!cartItems || cartItems.length === 0) {
-        console.error('Les items de panier n\'ont pas été trouvés');
         throw new Error('Les items de panier n\'ont pas été trouvés');
       }
 
@@ -61,7 +59,7 @@ export class OrderService {
 
       return savedOrder;
     } catch (error) {
-      console.error('Échec de la création de la commande globale :', error);
+    //  console.error('Échec de la création de la commande globale :', error);
       throw new Error(`Échec de la création de la commande globale : ${error.message}`);
     }
   }
@@ -80,7 +78,6 @@ export class OrderService {
           where: { product: { id: itemId }, user: { id: userId } }
         });
         if (!userChoice) {
-          console.error('Product not found');
           throw new Error('Product not found');
         }
 
@@ -95,7 +92,6 @@ export class OrderService {
     } else {
       const userCart = await this.cartRepository.findOne({ where: { user: { id: userId } } });
       if (!userCart) {
-        console.error('User cart not found');
         throw new Error('User cart not found');
       }
 
@@ -105,7 +101,6 @@ export class OrderService {
       });
 
       if (!cartItems || cartItems.length === 0) {
-        console.error('Cart items not found');
         throw new Error('Cart items not found');
       }
     }
@@ -138,7 +133,7 @@ export class OrderService {
       });
       return orders;
     } catch (error) {
-      console.error('Failed to fetch all orders:', error);
+     // console.error('Failed to fetch all orders:', error);
       throw new Error(`Failed to fetch all orders: ${error.message}`);
     }
   }
@@ -159,19 +154,22 @@ export class OrderService {
     await this.orderRepository.delete({})
   }
 
+
+  async deleteOrderAndRelatedNotifications(orderId: number): Promise<void> {
+    await this.notificationRepository.delete({ order: { id: orderId } });
+    await this.orderRepository.delete(orderId);
+  }
+  
   async deleteAllOrderNotifications(): Promise<void> {
-    console.log('error lors de la suppression');
     try {
       await this.notificationRepository.delete({});
-      console.log('All notifications deleted successfully');
-      return; // You can return void or a message
+      await this.orderRepository.delete({});
     } catch (error) {
-      console.error('Error deleting all order notifications:', error);
-      throw new Error('Failed to delete all order notifications');
+      //console.error('Error deleting all notifications and orders:', error);
+      throw new Error('Failed to delete all notifications and orders');
     }
   }
   
-
 
 
 }

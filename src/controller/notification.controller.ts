@@ -9,25 +9,20 @@ export class NotificationController {
 
     //get all notif
     @UseGuards(JwtAuthGuard)
-    @Get('getUserNotification')
+    @Get('getUserNotification/:id')
     async getAllUserNotifications(
-        @Req() req: any
-
-    ): Promise<Notification[]> {
-        const userId = (req.user as { userId: number }).userId;
-        return await this.notificationService.getAllUserNotifications(userId);
+        @Param('id') id:number,
+        @Req() req: any): Promise<Notification[]> {
+      const userId = (req.user as { userId: number }).userId;
+      return await this.notificationService.getAllUserNotifications(userId);
     }
-
+    
     @UseGuards(JwtAuthGuard)
-    @Get('OrderNotification')
-    async getOrderNotification(
-        @Req() req: any
-    ): Promise<Notification[]> {
-        const userId = (req.user as { userId: number }).userId;
-        return await this.notificationService.getOrderNotification(userId)
+    @Get('admin/OrderNotification')
+    async getOrderNotification(): Promise<Notification[]> {
+      return await this.notificationService.getOrderNotification();
     }
-
-
+    
     //get notif by id
     @UseGuards(JwtAuthGuard)
     @Get(':id')
@@ -64,30 +59,9 @@ export class NotificationController {
         try {
             return await this.notificationService.deleteAllUserNotifications(userId);
         } catch (error) {
-            console.error('Error deleting all notifications:', error);
+           // console.error('Error deleting all notifications:', error);
             throw new Error('Failed to delete all notifications');
         }
     }
-
-    
-    /////////////////////
-    //dashboard
-
-    @UseGuards(JwtAuthGuard)
-    @Delete(':id')
-    async deleteOrderNotification(
-        @Param('id') id: number): Promise<void> {
-        await this.notificationService.deleteOrderNotification(id);
-    }
-    
-    // @UseGuards(JwtAuthGuard)
-    // @Delete('')
-    // public async deleteAllOrderNotifications(@Req() req: Request) {
-    //     try {
-    //         return await this.notificationService.deleteAllOrderNotifications();
-    //     } catch (error) {
-    //         // throw ErrorHandlerHelper.errorHandler(error, req);
-    //     }
-    // }
 
 }

@@ -58,7 +58,7 @@ export class UserService {
             throw new Error('User not found');
         }
 
-        return user; // Return the found user object
+        return user;
     }
 
     async getAdminInfo(id: number): Promise<Admin> {
@@ -74,16 +74,11 @@ export class UserService {
         const user = await this.userRepository.findOne({ where: { id: userId } })
 
         if (!user) {
-
             throw new UnauthorizedException('User not found');
         }
-
         user.blocked = blocked;
-
-
         return await this.userRepository.save(user)
     }
-
 
     async getAllUser(): Promise<User[]> {
         return await this.userRepository.find()

@@ -46,7 +46,7 @@ export class ProductService {
           // Delete the product
           await this.productRepository.delete(id);
         } catch (error) {
-          console.error('Error deleting product:', error);
+         // console.error('Error deleting product:', error);
           throw new Error('Failed to delete product.');
         }
       }

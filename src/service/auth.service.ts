@@ -19,8 +19,8 @@ import { throwError } from 'rxjs';
 
 @Injectable()
 export class AuthService {
-  private readonly predefinedEmail = 'contact@thltechnologies.com';
-  private readonly predefinedPassword = 'THL@AdminBlog';
+  private readonly predefinedEmail = 'contact@docteur.com';
+  private readonly predefinedPassword = 'Doc@dash';
 
   private readonly predefineUsername = 'admin';
   private readonly predefineAdminPassword = 'admin00'
@@ -56,21 +56,19 @@ export class AuthService {
   async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
       const decodedToken = this.jwtService.verify(refreshToken);
-      console.log(decodedToken, 'decodedToken')
       const userId = decodedToken.userId;
-      console.log(userId, 'userId')
       const user = await this.userRepository.findOne({ where: { id: userId } }) ||
         await this.adminRepository.findOne({ where: { id: userId } });
 
       if (!user) {
-        console.error('User not found for refresh token. User ID:', userId);
+      //  console.error('User not found for refresh token. User ID:', userId);
         throw new UnauthorizedException('User not found');
       }
 
       const newAccessToken = this.generateAccessToken(user);
       return newAccessToken;
     } catch (error) {
-      console.error('Error refreshing access token:', error.message);
+      //console.error('Error refreshing access token:', error.message);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -86,17 +84,14 @@ export class AuthService {
   }
 
   async login(adminId: number) {
-    // Generate JWT token upon successful authentication
     const payload = { adminId };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  //backend service
   async userSignup(email: string, username: string, password: string, gender: string): Promise<string> {
     try {
-      // Vérifie si l'e-mail est déjà utilisé
       const existingEmail = await this.userRepository.findOne({
         where: { email },
       });
@@ -137,7 +132,7 @@ export class AuthService {
       const accessToken = this.generateAccessToken(user);
       return accessToken;
     } catch (error) {
-      console.error('Error during sign up:', error.message);
+    //  console.error('Error during sign up:', error.message);
       throw new UnauthorizedException(error.message);
     }
   }
@@ -188,7 +183,7 @@ export class AuthService {
   
       return { user, role: 'user' }; // Role should be 'user'
     } catch (error) {
-      console.error('Error during login:', error.message);
+     // console.error('Error during login:', error.message);
       throw new UnauthorizedException(error.message);
     }
   }
@@ -228,7 +223,7 @@ export class AuthService {
         //     from: '"thltechnologies" <no-reply@thltechserveur.com>',
       });
     } catch (error) {
-      console.error('Error sending email:', error);
+    //  console.error('Error sending email:', error);
     }
   }
   async verifyResetCode(email: string, code: string): Promise<User | null> {

@@ -59,9 +59,7 @@ export class AuthController {
     @Body() { refreshToken }: { refreshToken: string },
   ): Promise<{ accessToken: string }> {
     const newAccessToken =
-
       await this.authService.refreshAccessToken(refreshToken);
-
     return { accessToken: newAccessToken };
   }
 
@@ -119,7 +117,7 @@ export class AuthController {
       });
       res.status(200).send({ accessToken });
     } catch (error) {
-      console.error('Error during sign up:', error.message);
+      //console.error('Error during sign up:', error.message);
       res.status(400).send({ message: error.message });
     }
   }
@@ -151,7 +149,7 @@ export class AuthController {
 
       res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
     } catch (error) {
-      console.error('Error during login:', error.message);
+      //  console.error('Error during login:', error.message);
       res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
     }
   }
@@ -182,10 +180,10 @@ export class AuthController {
   ): Promise<void> {
     try {
       await this.authService.logout(accessToken);
-      res.clearCookie('accessToken'); // Clear the access token cookie
+      res.clearCookie('accessToken');
       res.status(200).send();
     } catch (error) {
-      console.error('Error during logout:', error.message);
+      // console.error('Error during logout:', error.message);
       res.status(400).send({ message: error.message });
     }
   }

@@ -51,7 +51,7 @@ export class CommentController {
 
       return comment;
     } catch (error) {
-      console.error('Error adding comment:', error.message);
+     // console.error('Error adding comment:', error.message);
       throw new BadRequestException('Failed to add comment');
     }
   }
@@ -98,7 +98,7 @@ export class CommentController {
       await this.commentService.deleteComment(id, userId);
       return { message: 'Comment deleted successfully' };
     } catch (error) {
-      console.error('Error deleting comment:', error.message);
+     // console.error('Error deleting comment:', error.message);
       throw new HttpException(
         'Failed to delete comment',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -131,7 +131,7 @@ export class CommentController {
       await this.commentService.deleteReply(id, userId);
       return { message: 'Reply deleted successfully' };
     } catch (error) {
-      console.error('Error deleting reply:', error.message);
+     // console.error('Error deleting reply:', error.message);
       throw new HttpException(
         'Failed to delete reply',
         HttpStatus.INTERNAL_SERVER_ERROR,

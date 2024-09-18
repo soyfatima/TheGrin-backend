@@ -59,7 +59,7 @@ export class FolderController {
       const folder = await this.FolderService.createFolder(userId, updatedFolderData);
       return folder;
     } catch (error) {
-      console.error('Error during folder creation:', error.message);
+      //console.error('Error during folder creation:', error.message);
       throw new HttpException(
         'Failed to create folder',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -106,7 +106,7 @@ export class FolderController {
       await this.FolderService.deleteFolder(userId, id);
       return { message: 'Folder deleted successfully' };
     } catch (error) {
-      console.error('Error during folder deletion:', error.message);
+      //console.error('Error during folder deletion:', error.message);
       throw new HttpException(
         'Failed to delete folder',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -142,7 +142,7 @@ export class FolderController {
       );
       return folder;
     } catch (error) {
-      console.error('Erreur lors de la création du dossier:', error);
+      //console.error('Erreur lors de la création du dossier:', error);
       throw new HttpException(
         'Impossible de créer le dossier',
         HttpStatus.INTERNAL_SERVER_ERROR,

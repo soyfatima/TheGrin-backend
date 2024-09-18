@@ -53,7 +53,7 @@ export class OrderController {
       const orders = await this.OrderService.getAllOrders();
       return orders;
     } catch (error) {
-      console.error('Error fetching orders:', error);
+     // console.error('Error fetching orders:', error);
       return [];
     }
   }
@@ -85,17 +85,25 @@ export class OrderController {
       // throw ErrorHandlerHelper.errorHandler(error, req);
     }
   }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('')
+  async deleteOrderNotification(
+    @Param('id') id: number): Promise<void> {
+    await this.OrderService.deleteOrderAndRelatedNotifications(id);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Delete('')
   public async deleteAllOrderNotifications(@Req() req: Request) {
     try {
       await this.OrderService.deleteAllOrderNotifications();
-      console.log('All order notifications deleted');
-      return { message: 'All notifications deleted successfully' }; // Response to client
+      return { message: 'All notifications and orders deleted successfully' };
     } catch (error) {
-      console.error('Error deleting all notifications:', error);
-      throw new Error('Failed to delete notifications'); // Customize error handling
+    //  console.error('Error deleting all notifications and orders:', error);
+      throw new Error('Failed to delete notifications and orders');
     }
   }
-  
+
 }
