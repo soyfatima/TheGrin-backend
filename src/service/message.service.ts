@@ -78,7 +78,6 @@ async getMessages(userId: number, recipientId: number): Promise<Message[]> {
     relations: ['sender', 'recipient'],
     order: { createdAt: 'ASC' },
   });
-  console.log('Messages retrieved from database:', messages);
 
   return messages.map(message => ({
     ...message,
@@ -101,25 +100,27 @@ async getMessages(userId: number, recipientId: number): Promise<Message[]> {
   //   return senders;
   // }
   
-
-  async getSenders(userId: number): Promise<{ user: User; unreadCount: number }[]> {
+  async getSenders(userId: number): Promise<{ user: User; unreadCount: number; lastMessageContent: string }[]> {
     const messages = await this.messagesRepository.find({
         where: { recipient: { id: userId }, read: false },
-        relations: ['sender'],
+        relations: ['sender'], // Fetch the sender relation
     });
 
-    // Extract unique sender IDs and count unread messages
-    const senderMap = new Map<number, number>();
+    const senderMap = new Map<number, { unreadCount: number; lastMessageContent: string }>();
     messages.forEach(msg => {
         const senderId = msg.sender.id;
-        senderMap.set(senderId, (senderMap.get(senderId) || 0) + 1);
+        const currentCount = senderMap.get(senderId) || { unreadCount: 0, lastMessageContent: '' };
+
+        currentCount.unreadCount += 1;
+        currentCount.lastMessageContent = msg.content; // Get the content of the last message
+
+        senderMap.set(senderId, currentCount);
     });
 
-    // Retrieve users with their unread message counts
     const sendersWithUnreadCount = await Promise.all(
-        Array.from(senderMap.entries()).map(async ([senderId, unreadCount]) => {
-            const sender = await this.userRepository.findOne({where :{id:senderId}});
-            return { user: sender, unreadCount };
+        Array.from(senderMap.entries()).map(async ([senderId, { unreadCount, lastMessageContent }]) => {
+            const sender = await this.userRepository.findOne({ where: { id: senderId } });
+            return { user: sender, unreadCount, lastMessageContent };
         })
     );
 
@@ -128,11 +129,19 @@ async getMessages(userId: number, recipientId: number): Promise<Message[]> {
 
 
 
-  async markMessagesAsRead(userId: number): Promise<void> {
+  // async markMessagesAsRead(userId: number): Promise<void> {
+  //   await this.messagesRepository.update(
+  //     { recipient: { id: userId }, read: false },
+  //     { read: true },
+  //   );
+  // }
+
+  async markMessagesAsRead(userId: number, recipientId: number): Promise<void> {
     await this.messagesRepository.update(
-      { recipient: { id: userId }, read: false },
-      { read: true },
+      { recipient: { id: recipientId }, sender: { id: userId }, read: false },
+      { read: true }
     );
   }
 
+  
 }

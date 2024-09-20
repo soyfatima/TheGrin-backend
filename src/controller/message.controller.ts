@@ -21,20 +21,6 @@ export class MessagingController {
 
     }
 
-
-
-    // @UseGuards(JwtAuthGuard)
-    // @Get('conversation/:recipientId')
-    // async getMessages(
-    //     @Param('recipientId') recipientId: number,
-    //     @Req() req: Request) {
-    //     const userId = (req.user as { userId: number }).userId;
-    //      console.log('get Sender ID:', userId);
-    //     console.log('get Recipient ID:', recipientId);
-    //     return this.messagingService.getMessages(userId, recipientId);
-    // }
-
-
     @UseGuards(JwtAuthGuard)
     @Get('conversation/:id')
     async getMessages(
@@ -42,11 +28,7 @@ export class MessagingController {
       @Req() req: Request                       
     ) {
       const userId = (req.user as { userId: number }).userId;
-      console.log('user id', userId);
-      console.log('recipient id', recipientId);
-      
       const messages = await this.messagingService.getMessages(userId, recipientId);
-      console.log('Fetched messages:', messages); // 
       return { messages };
     }
 
@@ -57,5 +39,12 @@ export class MessagingController {
 ) {
     const userId = (req.user as { userId: number }).userId;
     return this.messagingService.getSenders(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('markAsRead')
+  async markMessagesAsRead(@Body() body: { userId: number; recipientId: number }): Promise<void> {
+    const { userId, recipientId } = body;
+    await this.messagingService.markMessagesAsRead(userId, recipientId);
   }
 }
