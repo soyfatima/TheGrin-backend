@@ -16,8 +16,9 @@ import { Order } from './order.entity';
 import { CartItem } from './cart-item.entity';
 import { Folder } from './folder.entity';
 import { UserNoteReadStatus } from './noteread.entity';
+import { Message } from './message.entity';
 
-@Entity({ name: 'users' }) 
+@Entity({ name: 'users' })
 export class User {
 
   @PrimaryGeneratedColumn()
@@ -28,10 +29,10 @@ export class User {
 
   @Column()
   username: string;
-  
+
   @Column({ nullable: true })
   gender?: string;
-  
+
 
   @Column()
   password: string;
@@ -53,7 +54,7 @@ export class User {
 
   @Column({ nullable: true })
   resetCode: string;
-  
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -77,11 +78,29 @@ export class User {
 
   @OneToMany(() => CartItem, cartItem => cartItem.user)
   cartItems: CartItem[];
-  
+
   @OneToMany(() => UserNoteReadStatus, userNoteReadStatus => userNoteReadStatus.user)
   noteReadStatus: UserNoteReadStatus[];
-  
+
   @Column({ type: 'boolean', default: false })
   blocked: boolean;
+
+
+
+
+  @Column({ type: 'enum', enum: ['active', 'restricted', 'banned'], default: 'active' })
+  status: string;
+
+  @Column({ default: 10000000 }) // Limit number of messages per day
+  message_limit: number;
+
+  @OneToMany(() => Message, (message) => message.sender)
+  sentMessages: Message[];
+
+  @OneToMany(() => Message, (message) => message.recipient)
+  receivedMessages: Message[];
+
+  @Column({ type: 'boolean', default: true })
+  receiveNotifications: boolean;
 
 }

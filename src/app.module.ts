@@ -28,7 +28,7 @@ import { CartController } from './controller/cart.controller';
 import { OrderService } from './service/order.service';
 import { CartService } from './service/cart.service';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter'; // Import HandlebarsAdapter
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { MailerOptions, TransportType } from '@nestjs-modules/mailer/dist/interfaces/mailer-options.interface';
 import { folderFileOptions } from './fileOption';
 import { NotificationController } from './controller/notification.controller';
@@ -40,6 +40,11 @@ import { ProdFileOptions } from './prodFileOption';
 import { UserController } from './controller/user.controller';
 import { UserService } from './service/user.service';
 import { UserNoteReadStatus } from './noteread.entity';
+import { Message } from './message.entity';
+import { MessagingController } from './controller/message.controller';
+import { MessagingService } from './service/message.service';
+import { MessagingGateway } from './messaging.gateway';
+import { MessagingModule } from './Messaging.module';
 
 @Module({
   imports: [
@@ -50,15 +55,15 @@ import { UserNoteReadStatus } from './noteread.entity';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message],
       synchronize: true,
     }),
-
     MulterModule.register(multerOptions),
     MulterModule.register(folderFileOptions),
     MulterModule.register(adminFileOptions),
     MulterModule.register(ProdFileOptions),
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus]),
+    MessagingModule,
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15m' },
@@ -91,7 +96,8 @@ import { UserNoteReadStatus } from './noteread.entity';
     OrderController,
     CartController,
     NotificationController,
-    UserController
+    UserController,
+    MessagingController,
   ],
   providers: [
     AppService,
@@ -104,6 +110,8 @@ import { UserNoteReadStatus } from './noteread.entity';
     CartService,
     NotificationService,
     UserService,
+    MessagingService,
+    MessagingGateway, 
   ],
 })
 export class AppModule { }
