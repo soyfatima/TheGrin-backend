@@ -212,4 +212,25 @@ export class FolderService {
     }
   }
 
+  async deleteUserFolder(adminId: number, folderId: number): Promise<Folder> {
+    const folder = await this.folderRepository.findOne({ where: { id: folderId }, relations: ['user'] });
+    if (!folder) {
+        throw new NotFoundException('User folder not found or has already been deleted.');
+    }
+
+    const isAdmin = await this.checkIfAdmin(adminId); // Assume a method to check admin privileges
+    if (!isAdmin) {
+        throw new ForbiddenException('Only admins can delete this folder.');
+    }
+
+    await this.folderRepository.delete(folderId);
+
+    return folder; 
+}
+
+async checkIfAdmin(adminId: number): Promise<boolean> {
+    const admin = await this.adminRepository.findOne({ where: { id: adminId } });
+    return !!admin; 
+}
+
 }
