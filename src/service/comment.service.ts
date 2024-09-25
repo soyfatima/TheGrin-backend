@@ -247,9 +247,6 @@ export class CommentService {
       throw new ForbiddenException('Only admins can delete this folder.');
     }
   
-    // Debug: Check if commentId is valid
-    console.log('Comment ID:', commentId);
-  
     // Ensure the commentId is not undefined or null
     if (!commentId) {
       throw new BadRequestException('Invalid comment ID');
