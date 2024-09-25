@@ -6,6 +6,7 @@ import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
 import { NotificationService } from './notification.service';
 import { Admin } from 'src/admin.entity';
+import { Report } from 'src/report.entity';
 
 @Injectable()
 export class CommentService {
@@ -17,6 +18,9 @@ export class CommentService {
     @InjectRepository(Folder)
     private folderRepository: Repository<Folder>,
     private notificationService: NotificationService,
+    @InjectRepository(Report)
+    private readonly reportRepository: Repository<Report>,
+  
   ) { }
 
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {

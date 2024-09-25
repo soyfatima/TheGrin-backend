@@ -7,12 +7,13 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  
+
 } from 'typeorm';
 import { User } from './user.entity';
 import { Folder } from './folder.entity';
 import { Notification } from './notif.entity';
 import { Admin } from './admin.entity';
+import { Report } from './report.entity';
 
 @Entity({ name: 'comments' })
 export class Comment {
@@ -45,7 +46,12 @@ export class Comment {
 
   @UpdateDateColumn()
   updatedAt: Date;
- 
+
   @ManyToOne(() => Admin, admin => admin.comments, { nullable: true })
   admin: Admin;
+
+  @OneToMany(() => Report, (report) => report.comment, { cascade: ['remove'], onDelete: 'CASCADE' })
+  reports: Report[];
+
+
 }

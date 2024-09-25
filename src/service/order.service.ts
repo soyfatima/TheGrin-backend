@@ -39,8 +39,8 @@ export class OrderService {
 
       const totalAmount = cartItems.reduce((sum, item) => {
         const productPrice = parseFloat(item.product.price.replace(/\./g, '').replace(',', '.'));
-        return sum + (productPrice * item.quantity);
-      }, 0);
+           return sum + (productPrice * item.quantity);
+         }, 0);
 
       // Créer une copie des items de panier pour la commande globale
       const orderItems = cartItems.map(item => ({ ...item }));
@@ -107,8 +107,8 @@ export class OrderService {
 
     const totalAmount = cartItems.reduce((sum, item) => {
       const productPrice = parseFloat(item.product.price.replace(/\./g, '').replace(',', '.'));
-      return sum + (productPrice * item.quantity);
-    }, 0);
+       return sum + (productPrice * item.quantity);
+     }, 0);
 
     const userOrder = this.orderRepository.create({
       ...orderData,

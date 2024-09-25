@@ -17,6 +17,7 @@ import { CartItem } from './cart-item.entity';
 import { Folder } from './folder.entity';
 import { UserNoteReadStatus } from './noteread.entity';
 import { Message } from './message.entity';
+import { Report } from './report.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -85,9 +86,6 @@ export class User {
   @Column({ type: 'boolean', default: false })
   blocked: boolean;
 
-
-
-
   @Column({ type: 'enum', enum: ['active', 'restricted', 'banned'], default: 'active' })
   status: string;
 
@@ -103,4 +101,13 @@ export class User {
   @Column({ type: 'boolean', default: true })
   receiveNotifications: boolean;
 
+  // @OneToMany(() => Report, report => report.user)
+  // reports: Report[];
+  
+  @OneToMany(() => Report, (report) => report.reporter)
+  reportsMade: Report[];
+
+  // Reports received by the user
+  @OneToMany(() => Report, (report) => report.user)
+  reportsReceived: Report[];
 }

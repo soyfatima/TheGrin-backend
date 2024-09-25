@@ -22,7 +22,7 @@ import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { User } from 'src/user.entity';
-
+import { Report } from 'src/report.entity';
 export class CommentDto {
   content: string;
 }
@@ -152,5 +152,6 @@ export class CommentController {
     const users = await this.commentService.findUsersByPrefix(prefix);
     return users;
   }
+
 
 }

@@ -45,7 +45,9 @@ import { MessagingController } from './controller/message.controller';
 import { MessagingService } from './service/message.service';
 import { MessagingGateway } from './messaging.gateway';
 import { MessagingModule } from './Messaging.module';
-
+import { Report } from './report.entity';
+import { ReportService } from './service/report.service';
+import { ReportController } from './controller/report.controller';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -55,7 +57,7 @@ import { MessagingModule } from './Messaging.module';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report],
       synchronize: true,
     }),
     MulterModule.register(multerOptions),
@@ -63,7 +65,7 @@ import { MessagingModule } from './Messaging.module';
     MulterModule.register(adminFileOptions),
     MulterModule.register(ProdFileOptions),
     MessagingModule,
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message]),
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15m' },
@@ -98,6 +100,7 @@ import { MessagingModule } from './Messaging.module';
     NotificationController,
     UserController,
     MessagingController,
+    ReportController
   ],
   providers: [
     AppService,
@@ -112,6 +115,7 @@ import { MessagingModule } from './Messaging.module';
     UserService,
     MessagingService,
     MessagingGateway, 
+    ReportService
   ],
 })
 export class AppModule { }

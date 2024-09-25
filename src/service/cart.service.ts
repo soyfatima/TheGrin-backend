@@ -38,7 +38,7 @@ export class CartService {
 
       return savedCart;
     } catch (error) {
-     // console.error('Erreur lors de la création du panier pour l\'utilisateur:', error.message);
+      console.error('Erreur lors de la création du panier pour l\'utilisateur:', error.message);
       throw new InternalServerErrorException('Échec de la création du panier pour l\'utilisateur');
     }
   }
@@ -105,7 +105,7 @@ export class CartService {
       if (error.code === '23505') { // PostgreSQL unique violation error code
         throw new Error('Item already in cart');
       }
-      //console.error('Error adding product to cart:', error.message);
+      console.error('Error adding product to cart:', error.message);
       throw error;
     }
   }
@@ -142,9 +142,10 @@ export class CartService {
       return savedCartItem;
     } catch (error) {
       if (error.code === '23505') { 
+        console.error('Error adding product to cart: Item already in cart');
         throw new Error('Item already in cart');
       }
-//      console.error('Error adding product to cart:', error.message);
+      console.error('Error adding product to cart:', error.message);
       throw error;
     }
   }
@@ -193,7 +194,9 @@ export class CartService {
         totalQuantity += item.quantity;
       }
 
-      const productPrice = parseFloat(product.price.replace(/,/g, ''));
+     // const productPrice = parseFloat(product.price.replace(/,/g, ''));
+     const productPrice = parseFloat(product.price.replace(/\./g, '').replace(',', '.'));
+
       if (!isNaN(productPrice) && item.quantity) {
         totalPrice += productPrice * item.quantity;
       } else {
@@ -204,7 +207,7 @@ export class CartService {
     return { totalPrice, totalQuantity };
   }
 
-  //update cartItem
+  //   //update cartItem
   async updateCartItem(userId: number, productId: number, updateData: Partial<CartItem>): Promise<CartItem> {
     let cartItem = await this.cartItemRepository.findOne({
       where: { product: { id: productId }, user: { id: userId } },
@@ -226,7 +229,6 @@ export class CartService {
         throw new Error('User not found');
       }
     }
-
     // Validate and update selectedSize and quantity fields
     if (updateData.selectedSize !== undefined) {
       cartItem.selectedSize = updateData.selectedSize;
@@ -235,7 +237,6 @@ export class CartService {
       cartItem.quantity = updateData.quantity;
     }
   
-    // Ensure that at least one field is being updated
     if (updateData.selectedSize === undefined && updateData.quantity === undefined) {
       throw new Error('No update fields provided');
     }
@@ -251,8 +252,9 @@ export class CartService {
     });
 
     if (cartItem) {
-      const productPrice = parseFloat(cartItem.product.price.replace(/,/g, ''));
-      const totalPrice = isNaN(productPrice) ? 0 : productPrice * cartItem.quantity;
+     // const productPrice = parseFloat(cartItem.product.price.replace(/,/g, ''));
+     const productPrice = parseFloat(cartItem.product.price.replace(/\./g, '').replace(',', '.'));
+     const totalPrice = isNaN(productPrice) ? 0 : productPrice * cartItem.quantity;
       const totalQuantity = cartItem.quantity; 
 
       return { totalPrice, totalQuantity };
@@ -264,8 +266,9 @@ export class CartService {
           where: { product: { id: itemId }, user: { id: userId } }
         });
         const totalQuantity = userChoiceQuantity ? userChoiceQuantity.quantity : 1;
-        const productPrice = parseFloat(product.price.replace(/,/g, ''));
-        const totalPrice = isNaN(productPrice) ? 0 : productPrice * totalQuantity;
+    //    const productPrice = parseFloat(product.price.replace(/,/g, ''));
+    const productPrice = parseFloat(product.price.replace(/\./g, '').replace(',', '.'));
+    const totalPrice = isNaN(productPrice) ? 0 : productPrice * totalQuantity;
 
         return { totalPrice, totalQuantity };
       } else {
@@ -288,7 +291,7 @@ export class CartService {
       const updatedCart = await this.cartRepository.save(cart);
       return updatedCart;
     } catch (error) {
-     // console.error('Error removing product from cart:', error.message);
+      console.error('Error removing product from cart:', error.message);
       throw error;
     }
   }
