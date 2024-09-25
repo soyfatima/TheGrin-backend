@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Comment } from 'src/comment.entity';
@@ -6,6 +6,7 @@ import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
 import { NotificationService } from './notification.service';
 import { Admin } from 'src/admin.entity';
+import { Report } from 'src/report.entity';
 
 @Injectable()
 export class CommentService {
@@ -14,9 +15,14 @@ export class CommentService {
     private commentRepository: Repository<Comment>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Admin)
+    private adminRepository: Repository<Admin>,
     @InjectRepository(Folder)
     private folderRepository: Repository<Folder>,
     private notificationService: NotificationService,
+    @InjectRepository(Report)
+    private readonly reportRepository: Repository<Report>,
+  
   ) { }
 
   async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
@@ -223,5 +229,38 @@ export class CommentService {
     });
     return users;
   }
+
+
+
+  async deleteUserComment(adminId: number, commentId: number): Promise<Comment> {
+    const comment = await this.commentRepository.findOne({
+      where: { id: commentId },
+      relations: ['user', 'folder'],
+    });
+  
+    if (!comment) {
+      throw new NotFoundException('User comment not found or has been already deleted');
+    }
+  
+    const isAdmin = await this.checkIfAdmin(adminId);
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can delete this folder.');
+    }
+  
+    // Ensure the commentId is not undefined or null
+    if (!commentId) {
+      throw new BadRequestException('Invalid comment ID');
+    }
+  
+    await this.commentRepository.delete(commentId);
+    return comment;
+  }
+  
+
+
+async checkIfAdmin(adminId:number):Promise<boolean> {
+  const admin = await this.adminRepository.findOne({where:{id:adminId}});
+  return !!admin
+}
 
 }

@@ -12,6 +12,7 @@ import { User } from './user.entity';
 import { Comment } from './comment.entity';
 import { Admin } from './admin.entity';
 import { UserNoteReadStatus } from './noteread.entity';
+import { Report } from './report.entity';
 
 @Entity({ name: 'folders' })
 export class Folder {
@@ -54,5 +55,7 @@ export class Folder {
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
-  
+  @OneToMany(() => Report, (report) => report.folder, { cascade: ['remove'], onDelete: 'CASCADE' })
+  reports: Report[];
+
 }

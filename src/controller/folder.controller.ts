@@ -215,7 +215,14 @@ export class FolderController {
     userId = (req.user as { userId: number }).userId
     await this.FolderService.markNoteAsRead(noteId, userId);
   }
-
-
-
+  @UseGuards(JwtAuthGuard)
+  @Delete(':folderId')
+  async deleteUserFolder(
+    @Param('folderId') folderId: number,
+    @Req() req,
+  ): Promise<Folder> {
+    const adminId = (req.user as { userId: number }).userId;
+    return this.FolderService.deleteUserFolder(adminId, folderId);
+  }
+  
 }

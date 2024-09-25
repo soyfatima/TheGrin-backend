@@ -6,6 +6,7 @@ import { Order } from 'src/order.entity';
 import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
+import { Message } from 'src/message.entity';
 
 
 @Injectable()
@@ -114,7 +115,7 @@ export class NotificationService {
   
     return notifications;
   }
-  
+
   async getAllUserNotifications(userId: number): Promise<Notification[]> {
     try {
       const userNotifications = await this.notificationRepository.find({

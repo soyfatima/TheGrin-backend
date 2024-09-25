@@ -6,6 +6,6 @@
   "username": "postgres",
   "password": "password",
   "database": "myforum",
-  "entities": ["src/admin.entity.ts", "src/folder.entity.ts","src/comment.entity.ts", "src/user.entity.ts", "src/product.entity.ts", "src/order.entity.ts", "src/cart.entity.ts", "src/cart-item.entity.ts","src/notif.entity.ts", "src/noteread.entity.ts"],
+  "entities": ["src/admin.entity.ts", "src/folder.entity.ts","src/comment.entity.ts", "src/user.entity.ts", "src/product.entity.ts", "src/order.entity.ts", "src/cart.entity.ts", "src/cart-item.entity.ts","src/notif.entity.ts", "src/noteread.entity.ts", "src/message.entity.ts", "src/report.entity.ts"],
   "synchronize": true
 }

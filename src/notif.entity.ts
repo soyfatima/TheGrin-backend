@@ -29,4 +29,6 @@ export class Notification {
 
   @ManyToOne(() => User, { nullable: true })
   user: User;
+
+  
 }

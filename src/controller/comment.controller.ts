@@ -22,7 +22,7 @@ import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { User } from 'src/user.entity';
-
+import { Report } from 'src/report.entity';
 export class CommentDto {
   content: string;
 }
@@ -153,4 +153,15 @@ export class CommentController {
     return users;
   }
 
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':commentId')
+  async deleteUserComment(
+    @Param('commentId') commentId: number,
+    @Req() req
+  ): Promise<Comment> {
+    const adminId = (req.user as { userId: number }).userId;
+    return this.commentService.deleteUserComment(adminId, commentId);
+  }
+  
 }
