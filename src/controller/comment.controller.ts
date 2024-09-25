@@ -164,4 +164,16 @@ export class CommentController {
     return this.commentService.deleteUserComment(adminId, commentId);
   }
   
+
+  
+  @UseGuards(JwtAuthGuard)
+  @Delete(':replyId')
+  async deleteUserReply(
+    @Param('replyId') replyId: number,
+    @Req() req
+  ): Promise<Comment> {
+    const adminId = (req.user as { userId: number }).userId;
+    return this.commentService.deleteUserReply(adminId, replyId);
+  }
+  
 }
