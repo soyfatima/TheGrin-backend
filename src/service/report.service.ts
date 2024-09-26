@@ -59,7 +59,7 @@ export class ReportService {
 
         const reportCount = await this.reportRepository.count({ where: { comment: { id: commentId } } });
 
-        if (reportCount > 4) {
+        if (reportCount > 2) {
             // Block the user
             // await this.userRepository.update(reportedUser.id, {
             //     blocked: true,
@@ -77,11 +77,60 @@ export class ReportService {
             }
         }
 
-
-
         return report;
     }
 
+    async createReportByReply(replyId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
+        // Fetch the reply along with its associated user
+        const reply = await this.commentRepository.findOne({ 
+            where: { id: replyId }, 
+            relations: ['user', 'folder', 'parent', 'replies'] 
+        });
+    
+        if (!reply) {
+            throw new NotFoundException('This reply has already been deleted.');
+        }
+    
+        const reportedUser = reply.user; // The user who made the reply
+        const reporterUser = await this.userRepository.findOne({ where: { id: userId } });
+    
+        if (!reportedUser || !reporterUser) {
+            throw new NotFoundException('Reported user or reporter not found.');
+        }
+    
+        // Check if the same user has already reported this reply
+        const existingReport = await this.reportRepository.findOne({
+            where: { reply: { id: replyId }, reporter: { id: userId } }
+        });
+    
+        if (existingReport) {
+            throw new ConflictException('You have already reported this reply.');
+        }
+    
+        // Create a new report
+        const report = this.reportRepository.create({
+            ...reportData,
+            reporter: { id: userId },
+            user: { id: reportedUser.id },
+            reply: { id: replyId }
+        });
+    
+        await this.reportRepository.save(report);
+    
+        // Count the total number of reports for this reply
+        const reportCount = await this.reportRepository.count({ where: { reply: { id: replyId } } });
+        if (reportCount >= 3) {
+            await this.reportRepository.delete({ reply: { id: replyId } });
+            // Delete the reply itself
+            const deleteResult = await this.commentRepository.delete(replyId);
+            if (deleteResult.affected === 0) {
+                throw new NotFoundException(`Reply with ID ${replyId} could not be deleted or doesn't exist.`);
+            }
+        }
+    
+        return report;
+    }
+    
 
 
     async createReportByFolder(folderId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
@@ -116,7 +165,7 @@ export class ReportService {
         const reportCount = await this.reportRepository.count({
             where: { folder: { id: folderId } },
         });
-        if (reportCount >= 4) {
+        if (reportCount >= 2) {
             await this.reportRepository.delete({ folder: { id: folderId } });
             // Delete the folder
             const deleteResult = await this.folderRepository.delete(folderId);

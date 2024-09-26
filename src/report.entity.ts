@@ -28,6 +28,9 @@ export class Report {
     @ManyToOne(() => Folder, (folder) => folder.reports)
     folder: Folder;
 
+    @ManyToOne(() => Comment, (comment) => comment.reports)
+    reply: Comment; 
+    
     @Column()
     reason: string;
 
