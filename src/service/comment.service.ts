@@ -244,7 +244,7 @@ export class CommentService {
   
     const isAdmin = await this.checkIfAdmin(adminId);
     if (!isAdmin) {
-      throw new ForbiddenException('Only admins can delete this folder.');
+      throw new ForbiddenException('Only admins can delete this comment.');
     }
   
     // Ensure the commentId is not undefined or null
@@ -256,7 +256,30 @@ export class CommentService {
     return comment;
   }
   
-
+  async deleteUserReply(adminId: number, replyId: number): Promise<Comment> {
+    const comment = await this.commentRepository.findOne({
+      where: { id: replyId },
+      relations: ['user', 'folder', 'parent', 'replies'],
+    });
+  
+    if (!comment) {
+      throw new NotFoundException('User reply not found or has been already deleted');
+    }
+  
+    const isAdmin = await this.checkIfAdmin(adminId);
+    if (!isAdmin) {
+      throw new ForbiddenException('Only admins can delete this reply.');
+    }
+  
+    // Ensure the commentId is not undefined or null
+    if (!replyId) {
+      throw new BadRequestException('Invalid comment ID');
+    }
+  
+    await this.commentRepository.delete(replyId);
+    return comment;
+  }
+  
 
 async checkIfAdmin(adminId:number):Promise<boolean> {
   const admin = await this.adminRepository.findOne({where:{id:adminId}});
