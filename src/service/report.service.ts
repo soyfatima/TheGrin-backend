@@ -59,7 +59,7 @@ export class ReportService {
 
         const reportCount = await this.reportRepository.count({ where: { comment: { id: commentId } } });
 
-        if (reportCount > 2) {
+        if (reportCount > 4) {
             // Block the user
             // await this.userRepository.update(reportedUser.id, {
             //     blocked: true,
@@ -119,7 +119,7 @@ export class ReportService {
     
         // Count the total number of reports for this reply
         const reportCount = await this.reportRepository.count({ where: { reply: { id: replyId } } });
-        if (reportCount >= 3) {
+        if (reportCount >= 4) {
             await this.reportRepository.delete({ reply: { id: replyId } });
             // Delete the reply itself
             const deleteResult = await this.commentRepository.delete(replyId);
@@ -165,7 +165,7 @@ export class ReportService {
         const reportCount = await this.reportRepository.count({
             where: { folder: { id: folderId } },
         });
-        if (reportCount >= 2) {
+        if (reportCount >= 4) {
             await this.reportRepository.delete({ folder: { id: folderId } });
             // Delete the folder
             const deleteResult = await this.folderRepository.delete(folderId);
