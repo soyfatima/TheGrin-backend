@@ -13,7 +13,7 @@ async function bootstrap() {
 
   // Set the limit option for body-parser middlewares
   const bodyParserOptions = {
-    limit: '150mb',
+    limit: '750mb',
   };
 
   server.use(express.json(bodyParserOptions));
