@@ -76,7 +76,16 @@ export class UserService {
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
+
         user.blocked = blocked;
+
+        if (blocked) {
+            user.status = 'banned';
+        
+        } else {
+            user.status = 'active';
+        }
+
         return await this.userRepository.save(user)
     }
 
@@ -84,5 +93,5 @@ export class UserService {
         return await this.userRepository.find()
     }
 
-   
+
 }
