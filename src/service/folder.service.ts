@@ -75,7 +75,7 @@ export class FolderService {
 
 
   //edit content
-  async updateFolderContent(userId: number, id: number, content: string): Promise<Folder> {
+  async updateFolderContent(userId: number, id: number, title:string, content: string): Promise<Folder> {
     // Fetch the folder including its associated user
     const folder = await this.folderRepository.findOne({
       where: { id: id },
@@ -90,6 +90,7 @@ export class FolderService {
       throw new ForbiddenException('You are not allowed to edit this folder');
     }
 
+    folder.title = title;
     folder.content = content;
     await this.folderRepository.save(folder);
     return folder;

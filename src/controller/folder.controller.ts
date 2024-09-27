@@ -87,10 +87,11 @@ export class FolderController {
   async updateFolderContent(
     @Req() req: any,
     @Param('id') id: number,
+    @Body('title') title:string,
     @Body('content') content: string,
   ) {
     const userId = (req.user as { userId: number }).userId;
-    return this.FolderService.updateFolderContent(userId, id, content);
+    return this.FolderService.updateFolderContent(userId, id, title, content);
   }
 
   //delete folder

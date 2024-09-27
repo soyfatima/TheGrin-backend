@@ -21,6 +21,64 @@ export class ReportService {
     ) { }
 
 
+
+    async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report>): Promise<Report> {
+        // Find the reported user by ID
+        const reportedUser = await this.userRepository.findOne({ where: { id: reportedUserId } });
+    
+        if (!reportedUser) {
+            throw new NotFoundException('User not found');
+        }
+    
+        // Check if the reported user is banned
+        if (reportedUser.status === 'banned') {
+            throw new ConflictException('This user has already been banned');
+        }
+    
+        // Find the reporter user by ID
+        const reporterUser = await this.userRepository.findOne({ where: { id: UserId } });
+    
+        if (!reporterUser) {
+            throw new NotFoundException('Reporter not found');
+        }
+    
+        // Check if this user has already reported the same user
+        const existingReport = await this.reportRepository.findOne({
+            where: { user: { id: reportedUser.id }, reporter: { id: UserId } }
+        });
+    
+        if (existingReport) {
+            throw new ConflictException('You have already reported this user.');
+        }
+    
+        // Create the new report
+        const report = this.reportRepository.create({
+            ...reportData,
+            reporter: { id: UserId },
+            user: { id: reportedUser.id }
+        });
+    
+        await this.reportRepository.save(report);
+    
+        // Count the total number of reports for the reported user
+        const reportCount = await this.reportRepository.count({ where: { user: { id: reportedUser.id } } });
+    
+        // If the report count exceeds 2, block and ban the reported user
+        if (reportCount > 1) {
+            await this.userRepository.update(reportedUser.id, {
+                blocked: true,
+                status: 'banned'
+            });
+    
+            await this.reportRepository.delete({ user: { id: reportedUser.id } });
+        }
+    
+        return report;
+    }
+    
+
+
+
     async createReportByComment(commentId: number, UserId: number, reportData: Partial<Report>): Promise<Report> {
 
         const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user'] });
@@ -82,31 +140,31 @@ export class ReportService {
 
     async createReportByReply(replyId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
         // Fetch the reply along with its associated user
-        const reply = await this.commentRepository.findOne({ 
-            where: { id: replyId }, 
-            relations: ['user', 'folder', 'parent', 'replies'] 
+        const reply = await this.commentRepository.findOne({
+            where: { id: replyId },
+            relations: ['user', 'folder', 'parent', 'replies']
         });
-    
+
         if (!reply) {
             throw new NotFoundException('This reply has already been deleted.');
         }
-    
+
         const reportedUser = reply.user; // The user who made the reply
         const reporterUser = await this.userRepository.findOne({ where: { id: userId } });
-    
+
         if (!reportedUser || !reporterUser) {
             throw new NotFoundException('Reported user or reporter not found.');
         }
-    
+
         // Check if the same user has already reported this reply
         const existingReport = await this.reportRepository.findOne({
             where: { reply: { id: replyId }, reporter: { id: userId } }
         });
-    
+
         if (existingReport) {
             throw new ConflictException('You have already reported this reply.');
         }
-    
+
         // Create a new report
         const report = this.reportRepository.create({
             ...reportData,
@@ -114,9 +172,9 @@ export class ReportService {
             user: { id: reportedUser.id },
             reply: { id: replyId }
         });
-    
+
         await this.reportRepository.save(report);
-    
+
         // Count the total number of reports for this reply
         const reportCount = await this.reportRepository.count({ where: { reply: { id: replyId } } });
         if (reportCount >= 4) {
@@ -127,10 +185,10 @@ export class ReportService {
                 throw new NotFoundException(`Reply with ID ${replyId} could not be deleted or doesn't exist.`);
             }
         }
-    
+
         return report;
     }
-    
+
 
 
     async createReportByFolder(folderId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
