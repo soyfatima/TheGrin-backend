@@ -4,10 +4,14 @@ import { ReportService } from "src/service/report.service";
 import { Report } from 'src/report.entity';
 import { param } from "jquery";
 import { AuthGuard } from "@nestjs/passport";
+import { CustomLogger } from "src/logger/logger.service";
 
 @Controller('report')
 export class ReportController {
-    constructor(private reportService: ReportService) { }
+    constructor(private reportService: ReportService,
+    private readonly logger: CustomLogger,
+
+    ) { }
 
 
 

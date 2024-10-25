@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { User } from 'src/user.entity';
 import { throwError } from 'rxjs';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class UserService {
@@ -18,6 +19,8 @@ export class UserService {
         private readonly adminRepository: Repository<Admin>,
         @InjectRepository(User)
         private userRepository: Repository<User>,
+    private readonly logger: CustomLogger,
+
     ) { }
 
     async updateUserInfo(userId: number, username?: string, uploadedFile?: string): Promise<User> {

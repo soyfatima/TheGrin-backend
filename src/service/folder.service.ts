@@ -23,6 +23,7 @@ import {
 } from 'src/comment.entity';
 import { Admin } from 'src/admin.entity';
 import { UserNoteReadStatus } from 'src/noteread.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 @Injectable()
 export class FolderService {
   constructor(
@@ -36,6 +37,8 @@ export class FolderService {
     private userNoteReadStatusRepository: Repository<UserNoteReadStatus>,
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   //create folder

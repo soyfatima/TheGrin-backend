@@ -27,11 +27,15 @@ import { multerOptions } from '../multerOptions';
 import * as path from 'path';
 import { UserService } from 'src/service/user.service';
 import { User } from 'src/user.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 
 @Controller('users')
 export class UserController {
-  constructor(private userService: UserService) { }
+  constructor(private userService: UserService,
+    private readonly logger: CustomLogger,
+
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @Put(':id/update')
@@ -102,7 +106,7 @@ export class UserController {
       const user = await this.userService.blockUser(id, body.blocked);
       res.status(200).send(user);
     } catch (error) {
-     // console.error('Error blocking user:', error.message);
+      this.logger.error('Error blocking user:', error.message);
       res.status(400).send({ message: error.message });
     }
   }

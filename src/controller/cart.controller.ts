@@ -3,10 +3,14 @@ import { CartService } from 'src/service/cart.service';
 import { Cart } from 'src/cart.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { CartItem } from 'src/cart-item.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Controller('cart')
 export class CartController {
-  constructor(private readonly cartService: CartService) { }
+  constructor(private readonly cartService: CartService,
+    private readonly logger: CustomLogger,
+
+  ) { }
 
   //user cart
   @UseGuards(JwtAuthGuard)

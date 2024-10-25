@@ -12,12 +12,16 @@ import { Product } from "src/product.entity";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Express } from 'express';
 import { ProdFileOptions } from "src/prodFileOption";
+import { CustomLogger } from "src/logger/logger.service";
 
 
 
 @Controller('products')
 export class ProductController {
-    constructor(private ProductService: ProductService) { }
+    constructor(private ProductService: ProductService,
+    private readonly logger: CustomLogger,
+
+    ) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('create')

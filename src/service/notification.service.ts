@@ -7,6 +7,7 @@ import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
 import { Message } from 'src/message.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 
 @Injectable()
@@ -21,7 +22,9 @@ export class NotificationService {
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Folder)
-    private readonly folderRepository: Repository<Folder>
+    private readonly folderRepository: Repository<Folder>,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   async createNotifForComment(userId: number, message: string, commentId: number): Promise<Notification> {
@@ -125,7 +128,7 @@ export class NotificationService {
   
       return userNotifications;
     } catch (error) {
-    //  console.error('Failed to fetch notifications:', error);
+     this.logger.error('Failed to fetch notifications:', error);
       throw new Error('Unable to fetch notifications');
     }
   }
@@ -164,7 +167,7 @@ export class NotificationService {
     try {
       await this.notificationRepository.delete({ user: { id: userId } });
     } catch (error) {
-   //   console.error('Error deleting all notifications:', error);
+     this.logger.error('Error deleting all notifications:', error);
       throw new Error('Failed to delete all notifications');
     }
   }
