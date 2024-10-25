@@ -3,7 +3,8 @@ import {
     Param,
     Controller, HttpException, HttpStatus, Post, Put, UploadedFile, UseGuards, UseInterceptors,
     Delete,
-    Get
+    Get,
+    Patch
 } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ProductService } from "src/service/product.service";
@@ -79,4 +80,12 @@ export class ProductController {
     async getAllProduct(): Promise<Product[]> {
         return await this.ProductService.getAllProducts();
     }
+
+    //update all products remise
+  @Patch('update/remise')
+  @UseGuards(JwtAuthGuard)
+  async updateRemiseForAllProducts(@Body('remise') remise: string): Promise<{ message: string }> {
+    await this.ProductService.updateRemiseForAllProducts(remise);
+    return { message: 'Remise updated for all products successfully' };
+  }
 }
