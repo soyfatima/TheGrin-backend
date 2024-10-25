@@ -23,13 +23,17 @@ import { Folder } from 'src/folder.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { User } from 'src/user.entity';
 import { Report } from 'src/report.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 export class CommentDto {
   content: string;
 }
 
 @Controller('comments')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) { }
+  constructor(private readonly commentService: CommentService,
+    private readonly logger: CustomLogger,
+
+  ) { }
 
   // Add a comment
 
@@ -51,7 +55,7 @@ export class CommentController {
 
       return comment;
     } catch (error) {
-     // console.error('Error adding comment:', error.message);
+      this.logger.error('Error adding comment:', error.message);
       throw new BadRequestException('Failed to add comment');
     }
   }
@@ -98,7 +102,7 @@ export class CommentController {
       await this.commentService.deleteComment(id, userId);
       return { message: 'Comment deleted successfully' };
     } catch (error) {
-     // console.error('Error deleting comment:', error.message);
+      this.logger.error('Error deleting comment:', error.message);
       throw new HttpException(
         'Failed to delete comment',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -131,7 +135,7 @@ export class CommentController {
       await this.commentService.deleteReply(id, userId);
       return { message: 'Reply deleted successfully' };
     } catch (error) {
-     // console.error('Error deleting reply:', error.message);
+      this.logger.error('Error deleting reply:', error.message);
       throw new HttpException(
         'Failed to delete reply',
         HttpStatus.INTERNAL_SERVER_ERROR,

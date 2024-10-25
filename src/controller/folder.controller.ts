@@ -28,10 +28,14 @@ import { multerOptions } from '../multerOptions';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { folderFileOptions } from 'src/fileOption';
 import { adminFileOptions } from 'src/adminFileOption';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Controller('folders')
 export class FolderController {
-  constructor(private FolderService: FolderService) { }
+  constructor(private FolderService: FolderService,
+    private readonly logger: CustomLogger,
+
+  ) { }
 
   //create folder 
   @UseGuards(JwtAuthGuard)
@@ -59,7 +63,7 @@ export class FolderController {
       const folder = await this.FolderService.createFolder(userId, updatedFolderData);
       return folder;
     } catch (error) {
-      //console.error('Error during folder creation:', error.message);
+      this.logger.error('Error during folder creation:', error.message);
       throw new HttpException(
         'Failed to create folder',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -107,7 +111,7 @@ export class FolderController {
       await this.FolderService.deleteFolder(userId, id);
       return { message: 'Folder deleted successfully' };
     } catch (error) {
-      //console.error('Error during folder deletion:', error.message);
+      this.logger.error('Error during folder deletion:', error.message);
       throw new HttpException(
         'Failed to delete folder',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -143,7 +147,7 @@ export class FolderController {
       );
       return folder;
     } catch (error) {
-      //console.error('Erreur lors de la création du dossier:', error);
+      this.logger.error('Erreur lors de la création du dossier:', error);
       throw new HttpException(
         'Impossible de créer le dossier',
         HttpStatus.INTERNAL_SERVER_ERROR,

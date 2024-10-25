@@ -16,6 +16,7 @@ import { User } from 'src/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 import { randomBytes } from 'crypto';
 import { throwError } from 'rxjs';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +33,8 @@ export class AuthService {
     private readonly adminRepository: Repository<Admin>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   public getJwtSecret(): string {
@@ -61,14 +64,14 @@ export class AuthService {
         await this.adminRepository.findOne({ where: { id: userId } });
 
       if (!user) {
-      //  console.error('User not found for refresh token. User ID:', userId);
+        this.logger.error('User not found for refresh token. User ID:', userId);
         throw new UnauthorizedException('User not found');
       }
 
       const newAccessToken = this.generateAccessToken(user);
       return newAccessToken;
     } catch (error) {
-      //console.error('Error refreshing access token:', error.message);
+      this.logger.error('Error refreshing access token:', error.message);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -132,7 +135,7 @@ export class AuthService {
       const accessToken = this.generateAccessToken(user);
       return accessToken;
     } catch (error) {
-    //  console.error('Error during sign up:', error.message);
+      this.logger.error('Error during sign up:', error.message);
       throw new UnauthorizedException(error.message);
     }
   }
@@ -183,13 +186,11 @@ export class AuthService {
   
       return { user, role: 'user' }; // Role should be 'user'
     } catch (error) {
-     // console.error('Error during login:', error.message);
+     this.logger.error('Error during login:', error.message);
       throw new UnauthorizedException(error.message);
     }
   }
   
-
-
   async logout(accessToken: string): Promise<void> {
     try {
       const decodedToken = this.jwtService.verify(accessToken);
@@ -223,7 +224,7 @@ export class AuthService {
         //     from: '"thltechnologies" <no-reply@thltechserveur.com>',
       });
     } catch (error) {
-    //  console.error('Error sending email:', error);
+     this.logger.error('Error sending email:', error);
     }
   }
   async verifyResetCode(email: string, code: string): Promise<User | null> {

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/user.entity';
 import { Message } from 'src/message.entity';
 import { MessagingGateway } from 'src/messaging.gateway';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class MessagingService {
@@ -12,6 +13,8 @@ export class MessagingService {
     private userRepository: Repository<User>,
     @InjectRepository(Message) private messagesRepository: Repository<Message>,
     private messagingGateway: MessagingGateway,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   async sendMessage(UserId: number, recipientId: number, content: string): Promise<Message> {

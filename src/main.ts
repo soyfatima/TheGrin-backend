@@ -7,6 +7,8 @@ import { join } from 'path';
 import * as cors from 'cors';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from '@nestjs/common';
+import { CustomLogger } from './logger/logger.service';
+import { AllExceptionsFilter } from './logger/all-exceptions.filter';
 
 config();
 
@@ -36,10 +38,12 @@ async function bootstrap() {
   );
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
+ // Set up logger configuration
+ app.useLogger(new Logger());
+ const logger = app.get(CustomLogger);
+ app.useLogger(logger);
+ app.useGlobalFilters(new AllExceptionsFilter(logger));
 
-  // Set up logger configuration
-  
-  app.useLogger(new Logger());
   app.use('/blog-backend/ProfilPic', express.static('ProfilPic'));
   app.use('/blog-backend/userFile', express.static('userFile'));
   app.use('/blog-backend/adminFile', express.static('adminFile'));

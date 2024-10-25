@@ -2,10 +2,14 @@ import { Body, Controller, Delete, Get, Param, Patch, Put, Req, UseGuards } from
 import { Notification } from 'src/notif.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { NotificationService } from 'src/service/notification.service';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Controller('notifications')
 export class NotificationController {
-    constructor(private notificationService: NotificationService) { }
+    constructor(private notificationService: NotificationService,
+    private readonly logger: CustomLogger,
+
+    ) { }
 
     //get all notif
     @UseGuards(JwtAuthGuard)
@@ -59,7 +63,7 @@ export class NotificationController {
         try {
             return await this.notificationService.deleteAllUserNotifications(userId);
         } catch (error) {
-           // console.error('Error deleting all notifications:', error);
+           this.logger.error('Error deleting all notifications:', error);
             throw new Error('Failed to delete all notifications');
         }
     }

@@ -27,6 +27,7 @@ import { multerOptions } from '../multerOptions';
 import * as path from 'path';
 import { AuthService } from 'src/service/auth.service';
 import { CartService } from 'src/service/cart.service';
+import { CustomLogger } from 'src/logger/logger.service';
 
 // login.dto.ts
 export class LoginDto {
@@ -50,6 +51,8 @@ export class AuthController {
   profilePicturesController: any;
   constructor(private authService: AuthService,
     private readonly cartService: CartService,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   //refresh token
@@ -117,7 +120,7 @@ export class AuthController {
       });
       res.status(200).send({ accessToken });
     } catch (error) {
-      //console.error('Error during sign up:', error.message);
+      this.logger.error('Error during sign up:', error.message);
       res.status(400).send({ message: error.message });
     }
   }
@@ -149,7 +152,7 @@ export class AuthController {
 
       res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
     } catch (error) {
-      //  console.error('Error during login:', error.message);
+        this.logger.error('Error during login:', error.message);
       res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
     }
   }
@@ -179,11 +182,11 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<void> {
     try {
-      await this.authService.logout(accessToken);
+      await this.authService.logout(accessToken); 
       res.clearCookie('accessToken');
       res.status(200).send();
     } catch (error) {
-      // console.error('Error during logout:', error.message);
+      this.logger.error('Error during logout:', error);
       res.status(400).send({ message: error.message });
     }
   }

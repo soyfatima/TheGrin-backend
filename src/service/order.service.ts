@@ -6,6 +6,7 @@ import { Order } from "src/order.entity";
 import { Repository } from "typeorm";
 import { NotificationService } from "./notification.service";
 import { Notification } from "src/notif.entity";
+import { CustomLogger } from "src/logger/logger.service";
 @Injectable()
 export class OrderService {
   constructor(
@@ -18,6 +19,8 @@ export class OrderService {
     private notificationService: NotificationService,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    private readonly logger: CustomLogger,
+
   ) { }
 
 
@@ -59,7 +62,7 @@ export class OrderService {
 
       return savedOrder;
     } catch (error) {
-    //  console.error('Échec de la création de la commande globale :', error);
+      this.logger.error('Échec de la création de la commande globale :', error);
       throw new Error(`Échec de la création de la commande globale : ${error.message}`);
     }
   }
@@ -133,7 +136,7 @@ export class OrderService {
       });
       return orders;
     } catch (error) {
-     // console.error('Failed to fetch all orders:', error);
+      this.logger.error('Failed to fetch all orders:', error);
       throw new Error(`Failed to fetch all orders: ${error.message}`);
     }
   }
@@ -165,7 +168,7 @@ export class OrderService {
       await this.notificationRepository.delete({});
       await this.orderRepository.delete({});
     } catch (error) {
-      //console.error('Error deleting all notifications and orders:', error);
+      this.logger.error('Error deleting all notifications and orders:', error);
       throw new Error('Failed to delete all notifications and orders');
     }
   }

@@ -5,6 +5,7 @@ import { Report } from 'src/report.entity';
 import { User } from 'src/user.entity';
 import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class ReportService {
@@ -17,6 +18,8 @@ export class ReportService {
         private readonly commentRepository: Repository<Comment>,
         @InjectRepository(Folder)
         private folderRepository: Repository<Folder>,
+    private readonly logger: CustomLogger,
+
 
     ) { }
 

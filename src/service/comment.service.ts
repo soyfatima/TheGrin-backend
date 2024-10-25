@@ -7,6 +7,7 @@ import { User } from 'src/user.entity';
 import { NotificationService } from './notification.service';
 import { Admin } from 'src/admin.entity';
 import { Report } from 'src/report.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class CommentService {
@@ -22,6 +23,8 @@ export class CommentService {
     private notificationService: NotificationService,
     @InjectRepository(Report)
     private readonly reportRepository: Repository<Report>,
+    private readonly logger: CustomLogger,
+
   
   ) { }
 
@@ -34,7 +37,7 @@ export class CommentService {
       });
   
       if (!user || !folder) {
-      //  console.error('User or Folder not found', { userId, folderId });
+        this.logger.error('User or Folder not found', { userId, folderId });
         throw new Error('User or Folder not found');
       }
   
@@ -61,7 +64,7 @@ export class CommentService {
   
       return savedComment;
     } catch (error) {
-     // console.error('Error in addComment:', error);
+      this.logger.error('Error in addComment:', error);
       throw error;
     }
   }
@@ -78,7 +81,7 @@ export class CommentService {
       });
       return comments;
     } catch (error) {
-     // console.error('Error fetching comments:', error.message);
+      this.logger.error('Error fetching comments:', error.message);
       throw new Error('Failed to fetch comments');
     }
   }

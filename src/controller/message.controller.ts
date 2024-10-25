@@ -3,10 +3,14 @@ import { MessagingService } from 'src/service/message.service';
 import { Request } from 'express';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { use } from 'passport';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Controller('messaging')
 export class MessagingController {
-    constructor(private readonly messagingService: MessagingService) { }
+    constructor(private readonly messagingService: MessagingService,
+    private readonly logger: CustomLogger,
+
+    ) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('send/:id')

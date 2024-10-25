@@ -48,8 +48,11 @@ import { MessagingModule } from './Messaging.module';
 import { Report } from './report.entity';
 import { ReportService } from './service/report.service';
 import { ReportController } from './controller/report.controller';
+import { LoggerModule } from './logger/logger.module'; 
+
 @Module({
   imports: [
+    LoggerModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',

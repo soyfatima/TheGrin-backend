@@ -17,12 +17,16 @@ import { Express } from 'express';
 import { OrderService } from "src/service/order.service";
 import { Order } from "src/order.entity";
 import { CartItem } from "src/cart-item.entity";
+import { CustomLogger } from "src/logger/logger.service";
 
 
 
 @Controller('orders')
 export class OrderController {
-  constructor(private OrderService: OrderService) { }
+  constructor(private OrderService: OrderService,
+    private readonly logger: CustomLogger,
+
+  ) { }
 
   @UseGuards(JwtAuthGuard)
   @Post('global')
@@ -53,7 +57,7 @@ export class OrderController {
       const orders = await this.OrderService.getAllOrders();
       return orders;
     } catch (error) {
-     // console.error('Error fetching orders:', error);
+      this.logger.error('Error fetching orders:', error);
       return [];
     }
   }
@@ -101,7 +105,7 @@ export class OrderController {
       await this.OrderService.deleteAllOrderNotifications();
       return { message: 'All notifications and orders deleted successfully' };
     } catch (error) {
-    //  console.error('Error deleting all notifications and orders:', error);
+      this.logger.error('Error deleting all notifications and orders:', error);
       throw new Error('Failed to delete notifications and orders');
     }
   }
