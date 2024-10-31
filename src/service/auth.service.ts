@@ -183,8 +183,8 @@ export class AuthService {
       if (!isPasswordValid) {
         throw new UnauthorizedException('Invalid username or password');
       }
-  
-      return { user, role: 'user' }; // Role should be 'user'
+
+      return { user, role: 'user' };
     } catch (error) {
      this.logger.error('Error during login:', error.message);
       throw new UnauthorizedException(error.message);

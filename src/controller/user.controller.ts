@@ -18,6 +18,7 @@ import {
   ParseIntPipe,
   HttpStatus,
   Patch,
+  HttpException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -115,6 +116,32 @@ export class UserController {
   @Get('GetAllUser')
   async getAllUser(): Promise<User[]> {
     return await this.userService.getAllUser()
+  }
+
+  // Endpoint to request account deletion
+  @Delete('request-deletion/:id')
+  @UseGuards(JwtAuthGuard)
+  async requestAccountDeletion(@Param('id') id: number, @Req() req) {
+    try {
+      const id = (req.user as { userId: number }).userId;
+      const user = await this.userService.requestAccountDeletion(id);
+      return { message: 'Account deletion requested. Your account will be permanently deleted after 30 days.', user };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  // Private endpoint to delete expired accounts (optional)
+  @Delete('delete-expired')
+  @UseGuards(JwtAuthGuard)
+  async deleteExpiredAccounts() {
+    await this.userService.deleteExpiredAccounts();
+    return { message: 'Expired accounts deleted successfully.' };
+  }
+
+  @Post('cancel-deletion')
+  async cancelDeletion(@Body('id') userId: number): Promise<User> {
+    return this.userService.cancelAccountDeletion(userId);
   }
 
 }

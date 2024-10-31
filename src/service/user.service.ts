@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import { Admin } from 'src/admin.entity';
 import {
     BadRequestException,
@@ -96,5 +96,47 @@ export class UserService {
         return await this.userRepository.find()
     }
 
-
+    async requestAccountDeletion(userId: number): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+    
+        // Mark the account for deletion 30 days from the current date
+        user.deletionRequestedAt = new Date();
+        user.status = 'left'
+        await this.userRepository.save(user);
+    
+        return user;
+    }
+    
+    // Scheduled job to delete accounts after 30 days
+    async deleteExpiredAccounts(): Promise<void> {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+        const usersToDelete = await this.userRepository.find({
+            where: {
+                deletionRequestedAt: LessThan(thirtyDaysAgo),
+            },
+        });
+    
+        for (const user of usersToDelete) {
+            await this.userRepository.delete(user.id);
+        }
+    }
+    
+    async cancelAccountDeletion(userId: number): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+    
+        // Clear the deletionRequestedAt date to cancel the deletion request
+        user.deletionRequestedAt = null; // Or use undefined
+        await this.userRepository.save(user);
+    
+        return user;
+    }
+    
 }

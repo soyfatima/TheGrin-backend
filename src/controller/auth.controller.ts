@@ -125,38 +125,67 @@ export class AuthController {
     }
   }
 
+  // @Post('userLogin')
+  // async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
+  //   const { username, password, consent } = userLoginDto;
+  
+  //   try {
+  //     const { user, role } = await this.authService.userLogin(username, password, consent);
+  //     if (!user) {
+  //       throw new UnauthorizedException('Invalid credentials');
+  //     }
+  
+  //     const accessToken = this.authService.generateAccessToken(user);
+  //     const refreshToken = this.authService.generateRefreshToken(user);
+  
+  //     // Set tokens as cookies in the response only if the user has consented
+  //     if (consent) {
+  //       res.cookie('accessToken', accessToken, {
+  //         httpOnly: true,
+  //         secure: process.env.NODE_ENV === 'production',
+  //         sameSite: 'strict',
+  //         maxAge: 15 * 60 * 1000, // 15 minutes
+  //       });
+  //       res.cookie('refreshToken', refreshToken, {
+  //         httpOnly: true,
+  //         secure: process.env.NODE_ENV === 'production',
+  //         sameSite: 'strict',
+  //         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  //       });
+  //     }
+  
+  //     res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
+  //   } catch (error) {
+  //     this.logger.error('Error during login:', error.message);
+  //     res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
+  //   }
+  // }
+  
   @Post('userLogin')
   async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
     const { username, password } = userLoginDto;
-
+  
     try {
       const { user, role } = await this.authService.userLogin(username, password);
       if (!user) {
         throw new UnauthorizedException('Invalid credentials');
       }
-
+  
       const accessToken = this.authService.generateAccessToken(user);
       const refreshToken = this.authService.generateRefreshToken(user);
-
-      // Set tokens as cookies in the response
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'strict',
+  
+      // Vous pouvez choisir d’envoyer les jetons en réponse JSON sans cookies
+      res.status(HttpStatus.OK).send({
+        accessToken,
+        refreshToken,
+        userInfo: { ...user, role },
       });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'strict',
-      });
-
-      res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
     } catch (error) {
-        this.logger.error('Error during login:', error.message);
+      this.logger.error('Error during login:', error.message);
       res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
     }
   }
-
+  
   @Post('reset-code')
   async requestResetCode(@Body('email') email: string): Promise<void> {
     return this.authService.generateResetCode(email);
@@ -182,7 +211,7 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<void> {
     try {
-      await this.authService.logout(accessToken); 
+      await this.authService.logout(accessToken);
       res.clearCookie('accessToken');
       res.status(200).send();
     } catch (error) {
