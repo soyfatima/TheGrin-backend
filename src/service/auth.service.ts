@@ -5,6 +5,8 @@ import * as bcrypt from 'bcrypt';
 
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -174,10 +176,16 @@ export class AuthService {
         throw new UnauthorizedException('Invalid username or password');
       }
   
-      if (user.blocked) {
-        throw new UnauthorizedException('User is blocked');
-      }
+      // if (user.blocked) {
+      //   throw new UnauthorizedException('User is blocked');
+      // }
   
+      if (user.blocked) {
+        throw new HttpException(
+          { message: 'User is blocked' }, // Custom message field
+          HttpStatus.UNAUTHORIZED
+        );
+      }
       const isPasswordValid = await user.comparePassword(password);
   
       if (!isPasswordValid) {
