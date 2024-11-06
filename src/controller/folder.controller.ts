@@ -127,8 +127,8 @@ export class FolderController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
   @Post('create/note')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('uploadedFile', adminFileOptions))
   async createAdminNote(
     @UploadedFile() file: Express.Multer.File,
@@ -162,8 +162,8 @@ export class FolderController {
   }
 
   //update admin note
-  @UseGuards(JwtAuthGuard)
   @Patch('update/note/:id')
+  @UseGuards(JwtAuthGuard)
   async updateAdminNote(
     @Param('id') id: number,
     @Body() updatedFolderData: Partial<Folder>,
@@ -179,8 +179,8 @@ export class FolderController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('delete/note/:id')
+  @UseGuards(JwtAuthGuard)
   async deleteAdminNote(
     @Param('id') id: number,
   ): Promise<void> {
@@ -210,8 +210,8 @@ export class FolderController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('mark-note-as-read')
+  @UseGuards(JwtAuthGuard)
   async markNoteAsRead(
     @Body('noteId') noteId: number,
     @Body('userId') userId: number,

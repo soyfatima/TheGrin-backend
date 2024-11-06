@@ -49,6 +49,7 @@ import { Report } from './report.entity';
 import { ReportService } from './service/report.service';
 import { ReportController } from './controller/report.controller';
 import { LoggerModule } from './logger/logger.module'; 
+import { Contact } from './contact.entity';
 
 @Module({
   imports: [
@@ -60,7 +61,7 @@ import { LoggerModule } from './logger/logger.module';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact],
       synchronize: true,
     }),
     MulterModule.register(multerOptions),
@@ -68,7 +69,7 @@ import { LoggerModule } from './logger/logger.module';
     MulterModule.register(adminFileOptions),
     MulterModule.register(ProdFileOptions),
     MessagingModule,
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report]),
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15m' },

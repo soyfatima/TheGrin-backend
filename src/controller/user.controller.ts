@@ -29,6 +29,7 @@ import * as path from 'path';
 import { UserService } from 'src/service/user.service';
 import { User } from 'src/user.entity';
 import { CustomLogger } from 'src/logger/logger.service';
+import { Contact } from 'src/contact.entity';
 
 
 @Controller('users')
@@ -144,4 +145,16 @@ export class UserController {
     return this.userService.cancelAccountDeletion(userId);
   }
 
+
+  @Post('contact')
+  async contactUs(
+    @Body()contactData:Partial<Contact> 
+  ) {
+    return await this.userService.ContactUs(contactData)
+  }
+
+  @Get('getAllUserContactForm')
+  async getAllContactForm(): Promise<Contact[]> {
+    return await this.userService.getAllContactForm();
+  }
 }
