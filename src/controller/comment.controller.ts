@@ -90,7 +90,8 @@ export class CommentController {
     @Body('content') content: string,
   ) {
     const userId = (req.user as { userId: number }).userId;
-    return this.commentService.updateComment(userId, id, folderId, content);
+    const role = req.user.role;
+    return this.commentService.updateComment(userId, id, folderId, content, role);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -123,7 +124,8 @@ export class CommentController {
     @Body('content') content: string,
   ) {
     const userId = (req.user as { userId: number }).userId;
-    return this.commentService.updateReply(userId, id, folderId, content);
+    const role = req.user.role;
+    return this.commentService.updateReply(userId, id, folderId, content, role);
   }
 
   @UseGuards(JwtAuthGuard)
