@@ -27,6 +27,10 @@ export class Comment {
   @JoinColumn()
   user: User;
 
+  @ManyToOne(() => Admin, (admin) => admin.comments, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  admin: Admin;
+
   @ManyToOne(() => Folder, (folder) => folder.comments, { onDelete: 'CASCADE' })
   @JoinColumn()
   folder: Folder;
@@ -47,8 +51,8 @@ export class Comment {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Admin, admin => admin.comments, { nullable: true })
-  admin: Admin;
+  // @ManyToOne(() => Admin, admin => admin.comments, { nullable: true })
+  // admin: Admin;
 
   @OneToMany(() => Report, (report) => report.comment, { cascade: ['remove'], onDelete: 'CASCADE' })
   reports: Report[];

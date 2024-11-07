@@ -47,12 +47,13 @@ export class CommentController {
   ): Promise<Comment> {
     try {
       const userId = (req.user as { userId: number }).userId;
+      const role = req.user.role;  
       const comment = await this.commentService.addComment(
         folderId,
         userId,
         body.content,
+        role
       );
-
       return comment;
     } catch (error) {
       this.logger.error('Error adding comment:', error.message);
@@ -75,7 +76,9 @@ export class CommentController {
     @Body('content') content: string,
   ): Promise<Comment> {
     const userId = (req.user as { userId: number }).userId;
-    return this.commentService.addReply(commentId, content, userId);
+    const role = req.user.role;  
+
+    return this.commentService.addReply(commentId, content, userId, role);
   }
 
   @UseGuards(JwtAuthGuard)

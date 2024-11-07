@@ -44,14 +44,15 @@ export class AuthService {
   }
 
   generateAccessToken(user: User | Admin): string {
-    const payload = { userId: user.id };
+    //const payload = { userId: user.id, };
+    const payload = { userId: user.id, role: user instanceof Admin ? 'admin' : 'user' }; 
     const options = { expiresIn: '15m' };
     const token = this.jwtService.sign(payload, options);
     return token;
   }
 
   generateRefreshToken(user: User | Admin): string {
-    const payload = { userId: user.id };
+    const payload = { userId: user.id, role:user instanceof Admin ? 'admin' : 'user' };
     const options = { expiresIn: '1d' };
     const token = this.jwtService.sign(payload, options);
     return token;
@@ -203,11 +204,13 @@ export class AuthService {
     try {
       const decodedToken = this.jwtService.verify(accessToken);
       const userId = decodedToken.userId;
-      return;
+      return; 
     } catch (error) {
+      this.logger.error('Error verifying token during logout:', error);
       throw new UnauthorizedException('Invalid access token');
     }
   }
+  
 
   async generateResetCode(email: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { email } });

@@ -28,46 +28,99 @@ export class CommentService {
   
   ) { }
 
-  async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
+
+
+  async addComment(folderId: number, userId: number, content: string, role: string): Promise<Comment> {
     try {
-      const user = await this.userRepository.findOne({ where: { id: userId } });
-      const folder = await this.folderRepository.findOne({ 
+      let user: User | null = null;
+      let admin: Admin | null = null;
+  
+      if (role === 'user') {
+        user = await this.userRepository.findOne({ where: { id: userId } });
+      } else if (role === 'admin') {
+        admin = await this.adminRepository.findOne({ where: { id: userId } });
+      }
+  
+      const folder = await this.folderRepository.findOne({
         where: { id: folderId },
-        relations: ['user'], 
+        relations: ['user', 'admin'],
       });
   
-      if (!user || !folder) {
-        this.logger.error('User or Folder not found', { userId, folderId });
-        throw new Error('User or Folder not found');
+      if ((!user && role === 'user') || (!admin && role === 'admin') || !folder) {
+        throw new Error('User, admin, or folder not found');
       }
   
       // Create and save the comment
       const comment = new Comment();
       comment.content = content;
-      comment.user = user;
+  
+      if (role === 'user') {
+        comment.user = user;
+      } else if (role === 'admin') {
+        comment.admin = admin;
+      }
       comment.folder = folder;
   
       const savedComment = await this.commentRepository.save(comment);
+
+      const commenterName = role === 'user' ? user.username : admin.username;
+      const folderName = folder.title;
   
-      // Notify the folder owner about the new comment
       if (folder.user.id !== userId) {
-        const userName = user.username;
-        const folderName = folder.title;
-        
-        // Notify only the owner of the folder
         await this.notificationService.createNotifForComment(
-          folder.user.id, // Notify the owner of the folder
-          `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
+          folder.user.id,
+          `Nouveau commentaire de ${commenterName} sur votre poste ${folderName}`,
           savedComment.id
         );
       }
   
       return savedComment;
     } catch (error) {
-      this.logger.error('Error in addComment:', error);
-      throw error;
+      this.logger.error('Error in addComment service:', error.message);
+      throw new BadRequestException('Failed to add comment');
     }
   }
+  
+  // async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
+  //   try {
+  //     const user = await this.userRepository.findOne({ where: { id: userId } });
+  //     const folder = await this.folderRepository.findOne({ 
+  //       where: { id: folderId },
+  //       relations: ['user'], 
+  //     });
+  
+  //     if (!user || !folder) {
+  //       this.logger.error('User or Folder not found', { userId, folderId });
+  //       throw new Error('User or Folder not found');
+  //     }
+  
+  //     // Create and save the comment
+  //     const comment = new Comment();
+  //     comment.content = content;
+  //     comment.user = user;
+  //     comment.folder = folder;
+  
+  //     const savedComment = await this.commentRepository.save(comment);
+  
+  //     // Notify the folder owner about the new comment
+  //     if (folder.user.id !== userId) {
+  //       const userName = user.username;
+  //       const folderName = folder.title;
+        
+  //       // Notify only the owner of the folder
+  //       await this.notificationService.createNotifForComment(
+  //         folder.user.id, // Notify the owner of the folder
+  //         `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
+  //         savedComment.id
+  //       );
+  //     }
+  
+  //     return savedComment;
+  //   } catch (error) {
+  //     this.logger.error('Error in addComment:', error);
+  //     throw error;
+  //   }
+  // }
   
 
 
@@ -76,7 +129,7 @@ export class CommentService {
     try {
       const comments = await this.commentRepository.find({
         where: { folder: { id: folderId } },
-        relations: ['user', 'replies', 'replies.user'],
+        relations: ['user', 'admin','replies', 'replies.user'],
         order: { createdAt: 'ASC' }, 
       });
       return comments;
@@ -85,65 +138,149 @@ export class CommentService {
       throw new Error('Failed to fetch comments');
     }
   }
-
-
-  async addReply(commentId: number, content: string, userId: number): Promise<Comment> {
+  async addReply(commentId: number, content: string, userId: number, role: string): Promise<Comment> {
     const parentComment = await this.commentRepository.findOne({
       where: { id: commentId },
-      relations: ['folder', 'user']
+      relations: ['folder', 'user', 'admin']
     });
-
-
+  
     if (!parentComment) {
       throw new NotFoundException('Parent comment not found');
     }
-
+  
+    // Handle mention of another user
     const mentionMatch = content.match(/@(\w+)/);
     let mentionedUser = null;
     let mentionedUserId = null;
-
+  
     if (mentionMatch) {
       const mentionedUsername = mentionMatch[1];
       mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
       if (mentionedUser) {
         mentionedUserId = mentionedUser.id;
+      } else {
       }
     }
+  
+    // Create the reply comment
 
-    const reply = this.commentRepository.create({
-      content,
-      user: { id: userId },
-      parent: parentComment
-    });
-    const savedReply = await this.commentRepository.save(reply);
-
-    const replier = await this.userRepository.findOne({ where: { id: userId } });
-
+   // Create the reply comment
+   const reply = this.commentRepository.create({
+    content,
+    user: role === 'admin' ? null : { id: userId },  // Assign user if not admin
+    admin: role === 'admin' ? { id: userId } : null,  // Assign admin if it's an admin role
+    parent: parentComment
+  });
+  
+    let savedReply;
+    try {
+      savedReply = await this.commentRepository.save(reply);
+    } catch (error) {
+      this.logger.error('Error saving reply:', error);
+      throw new Error('Failed to save comment: ' + error.message);
+    }
+  
+    let replier: any;
+    if (role === 'admin') {
+      replier = await this.adminRepository.findOne({ where: { id: userId } });
+    } else {
+      replier = await this.userRepository.findOne({ where: { id: userId } });
+    }
+  
+    if (!replier) {
+      throw new NotFoundException(`Replier with id ${userId} not found`);
+    }
+  
+    // Notifications for new replies
     if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
       await this.notificationService.createNotifForFolder(
-        `Nouveau commentaire de ${replier?.username} sur votre poste ${parentComment.folder.title}`,
+        `Nouveau commentaire de ${replier.username} sur votre poste ${parentComment.folder.title}`,
         parentComment.folder.id,
         parentComment.folder.user.id
       );
     }
-
+  
     if (parentComment.user && parentComment.user.id !== userId) {
       await this.notificationService.createNotifForReply(
-        `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`,
+        `Nouveau commentaire de ${replier.username} en réponse à votre commentaire`,
         parentComment.id
       );
     }
-
+  
     if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
       await this.notificationService.createNotifForMention(
-        `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
+        `Vous avez été mentionné dans un commentaire par ${replier.username}`,
         parentComment.id,
         mentionedUserId
       );
     }
-
+  
     return savedReply;
   }
+  
+
+  // async addReply(commentId: number, content: string, userId: number, role:string): Promise<Comment> {
+  //   const parentComment = await this.commentRepository.findOne({
+  //     where: { id: commentId },
+  //     relations: ['folder', 'user', 'admin']
+  //   });
+
+
+  //   if (!parentComment) {
+  //     throw new NotFoundException('Parent comment not found');
+  //   }
+
+  //   const mentionMatch = content.match(/@(\w+)/);
+  //   let mentionedUser = null;
+  //   let mentionedUserId = null;
+
+  //   if (mentionMatch) {
+  //     const mentionedUsername = mentionMatch[1];
+  //     mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
+  //     if (mentionedUser) {
+  //       mentionedUserId = mentionedUser.id;
+  //     }
+  //   }
+
+  //   const reply = this.commentRepository.create({
+  //     content,
+  //     user: { id: userId },
+  //     parent: parentComment
+  //   });
+  //   const savedReply = await this.commentRepository.save(reply);
+
+  //   let replier: any;
+  //   if (role === 'admin') {
+  //   const replier = await this.adminRepository.findOne({ where: { id: userId } });
+  //   }else {
+  //   const replier = await this.userRepository.findOne({ where: { id: userId } });
+  //   }
+
+  //   if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
+  //     await this.notificationService.createNotifForFolder(
+  //       `Nouveau commentaire de ${replier?.username} sur votre poste ${parentComment.folder.title}`,
+  //       parentComment.folder.id,
+  //       parentComment.folder.user.id
+  //     );
+  //   }
+
+  //   if (parentComment.user && parentComment.user.id !== userId) {
+  //     await this.notificationService.createNotifForReply(
+  //       `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`,
+  //       parentComment.id
+  //     );
+  //   }
+
+  //   if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
+  //     await this.notificationService.createNotifForMention(
+  //       `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
+  //       parentComment.id,
+  //       mentionedUserId
+  //     );
+  //   }
+
+  //   return savedReply;
+  // }
 
   async updateComment(userId: number, id: number, folderId: number, content: string): Promise<Comment> {
     const comment = await this.commentRepository.findOne({

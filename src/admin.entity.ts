@@ -25,7 +25,6 @@ export class Admin {
   @OneToMany(() => Comment, (comment) => comment.admin)
   comments: Comment[];
 
-
    bcrypt = require('bcrypt');
   hashedPassword = bcrypt.hashSync('admin00', 10);
   

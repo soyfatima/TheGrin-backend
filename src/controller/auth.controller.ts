@@ -206,18 +206,19 @@ export class AuthController {
 
   //logout
   @Post('logout')
-  async logout(
-    @Body('accessToken') accessToken: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    try {
-      await this.authService.logout(accessToken);
-      res.clearCookie('accessToken');
-      res.status(200).send();
-    } catch (error) {
-      this.logger.error('Error during logout:', error);
-      res.status(400).send({ message: error.message });
-    }
+async logout(
+  @Body('accessToken') accessToken: string,
+  @Res() res: Response,
+): Promise<void> {
+  try {
+    await this.authService.logout(accessToken);
+    res.clearCookie('accessToken');
+    res.status(200).send({ message: 'Logged out successfully' });
+  } catch (error) {
+    this.logger.error('Error during logout:', error);
+    res.status(400).send({ message: error.message });
   }
+}
+
 
 }
