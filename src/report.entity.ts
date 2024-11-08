@@ -8,11 +8,6 @@ export class Report {
     @PrimaryGeneratedColumn()
     id: number;
 
-    // @ManyToOne(() => User, (user) => user.reports) // Establishing the relationship to User
-    // user: User;
-
-
-    // The reporter (the user making the report)
     @ManyToOne(() => User, (user) => user.reportsMade)
     @JoinColumn({ name: 'reporterId' })
     reporter: User;
@@ -22,15 +17,23 @@ export class Report {
     @JoinColumn({ name: 'userId' })
     user: User;
     
-    @ManyToOne(() => Comment, (comment) => comment.reports)
-    comment: Comment;
+    // @ManyToOne(() => Comment, (comment) => comment.reports, { onDelete: 'CASCADE' })
+    // comment: Comment;
 
+    //@ManyToOne(() => Comment, (comment) => comment.reports)
+    // reply: Comment; 
+    
+    @ManyToOne(() => Comment, (comment) => comment.reports, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'commentId' })
+    comment: Comment;
+    
+    @ManyToOne(() => Comment, (comment) => comment.reports, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'replyId' })
+    reply: Comment;
+    
     @ManyToOne(() => Folder, (folder) => folder.reports)
     folder: Folder;
 
-    @ManyToOne(() => Comment, (comment) => comment.reports)
-    reply: Comment; 
-    
     @Column()
     reason: string;
 

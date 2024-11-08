@@ -37,7 +37,7 @@ export class CommentController {
 
   // Add a comment
 
- 
+
   @UseGuards(JwtAuthGuard)
   @Post(':folderId')
   async addComment(
@@ -47,7 +47,7 @@ export class CommentController {
   ): Promise<Comment> {
     try {
       const userId = (req.user as { userId: number }).userId;
-      const role = req.user.role;  
+      const role = req.user.role;
       const comment = await this.commentService.addComment(
         folderId,
         userId,
@@ -60,7 +60,7 @@ export class CommentController {
       throw new BadRequestException('Failed to add comment');
     }
   }
-  
+
   //fetch comments
   @Get('/folder/:folderId')
   async getCommentsByFolderId(@Param('folderId') folderId: number): Promise<Comment[]> {
@@ -76,7 +76,7 @@ export class CommentController {
     @Body('content') content: string,
   ): Promise<Comment> {
     const userId = (req.user as { userId: number }).userId;
-    const role = req.user.role;  
+    const role = req.user.role;
 
     return this.commentService.addReply(commentId, content, userId, role);
   }
@@ -101,9 +101,9 @@ export class CommentController {
     @Req() req,
   ) {
     const userId = (req.user as { userId: number }).userId;
-
+    const role = req.user.role;
     try {
-      await this.commentService.deleteComment(id, userId);
+      await this.commentService.deleteComment(id, userId, role);
       return { message: 'Comment deleted successfully' };
     } catch (error) {
       this.logger.error('Error deleting comment:', error.message);
@@ -113,7 +113,7 @@ export class CommentController {
       );
     }
   }
-  
+
 
   @UseGuards(JwtAuthGuard)
   @Put('replies/:id')
@@ -135,9 +135,9 @@ export class CommentController {
     @Req() req,
   ) {
     const userId = (req.user as { userId: number }).userId;
-
+    const role = req.user.role;
     try {
-      await this.commentService.deleteReply(id, userId);
+      await this.commentService.deleteReply(id, userId, role);
       return { message: 'Reply deleted successfully' };
     } catch (error) {
       this.logger.error('Error deleting reply:', error.message);
@@ -172,9 +172,9 @@ export class CommentController {
     const adminId = (req.user as { userId: number }).userId;
     return this.commentService.deleteUserComment(adminId, commentId);
   }
-  
 
-  
+
+
   @UseGuards(JwtAuthGuard)
   @Delete(':replyId')
   async deleteUserReply(
@@ -184,5 +184,5 @@ export class CommentController {
     const adminId = (req.user as { userId: number }).userId;
     return this.commentService.deleteUserReply(adminId, replyId);
   }
-  
+
 }

@@ -129,7 +129,7 @@ export class CommentService {
     try {
       const comments = await this.commentRepository.find({
         where: { folder: { id: folderId } },
-        relations: ['user', 'admin', 'replies', 'replies.user'],
+        relations: ['user', 'admin', 'replies', 'replies.user', 'replies.admin'],
         order: { createdAt: 'ASC' },
       });
       return comments;
@@ -218,70 +218,6 @@ export class CommentService {
     return savedReply;
   }
 
-
-  // async addReply(commentId: number, content: string, userId: number, role:string): Promise<Comment> {
-  //   const parentComment = await this.commentRepository.findOne({
-  //     where: { id: commentId },
-  //     relations: ['folder', 'user', 'admin']
-  //   });
-
-
-  //   if (!parentComment) {
-  //     throw new NotFoundException('Parent comment not found');
-  //   }
-
-  //   const mentionMatch = content.match(/@(\w+)/);
-  //   let mentionedUser = null;
-  //   let mentionedUserId = null;
-
-  //   if (mentionMatch) {
-  //     const mentionedUsername = mentionMatch[1];
-  //     mentionedUser = await this.userRepository.findOne({ where: { username: mentionedUsername } });
-  //     if (mentionedUser) {
-  //       mentionedUserId = mentionedUser.id;
-  //     }
-  //   }
-
-  //   const reply = this.commentRepository.create({
-  //     content,
-  //     user: { id: userId },
-  //     parent: parentComment
-  //   });
-  //   const savedReply = await this.commentRepository.save(reply);
-
-  //   let replier: any;
-  //   if (role === 'admin') {
-  //   const replier = await this.adminRepository.findOne({ where: { id: userId } });
-  //   }else {
-  //   const replier = await this.userRepository.findOne({ where: { id: userId } });
-  //   }
-
-  //   if (parentComment.folder && parentComment.folder.user && parentComment.folder.user.id !== userId) {
-  //     await this.notificationService.createNotifForFolder(
-  //       `Nouveau commentaire de ${replier?.username} sur votre poste ${parentComment.folder.title}`,
-  //       parentComment.folder.id,
-  //       parentComment.folder.user.id
-  //     );
-  //   }
-
-  //   if (parentComment.user && parentComment.user.id !== userId) {
-  //     await this.notificationService.createNotifForReply(
-  //       `Nouveau commentaire de ${replier?.username} en réponse à votre commentaire`,
-  //       parentComment.id
-  //     );
-  //   }
-
-  //   if (mentionedUser && mentionedUser.id !== userId && mentionedUser.id !== parentComment.user?.id) {
-  //     await this.notificationService.createNotifForMention(
-  //       `Vous avez été mentionné dans un commentaire par ${replier?.username}`,
-  //       parentComment.id,
-  //       mentionedUserId
-  //     );
-  //   }
-
-  //   return savedReply;
-  // }
-
   async updateComment(userId: number, id: number, folderId: number, content: string, role: string): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
       where: { id: id },
@@ -308,17 +244,24 @@ export class CommentService {
 
   }
 
-  async deleteComment(commentId: number, userId: number): Promise<void> {
+  async deleteComment(commentId: number, userId: number, role: string): Promise<void> {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
-      relations: ['user', 'folder']
+      relations: ['user', 'folder', 'admin', 'reports']
     });
 
     if (!comment) {
       throw new NotFoundException('Comment not found');
     }
 
-    if (comment.user.id !== userId) {
+    // Check if the comment has any reports
+  if (comment.reports && comment.reports.length > 0) {
+    throw new ForbiddenException('This comment cannot be deleted because it has been reported.');
+  }
+    const ownerUser = comment.user && comment.user.id === userId;
+    const ownerAdmin = role === 'admin' && comment.admin && comment.admin.id === userId;
+
+    if (!ownerUser && !ownerAdmin) {
       throw new ForbiddenException('You do not have permission to delete this comment');
     }
 
@@ -345,22 +288,49 @@ export class CommentService {
     return reply;
   }
 
-  async deleteReply(replyId: number, userId: number): Promise<void> {
+  async deleteReply(replyId: number, userId: number, role: string): Promise<void> {
+    console.log(`Attempting to delete reply with ID: ${replyId}, by user ID: ${userId}, role: ${role}`);
+  
+    // Fetch the reply along with its reports and related entities
     const reply = await this.commentRepository.findOne({
       where: { id: replyId },
-      relations: ['user', 'parent'],
+      relations: ['user', 'admin', 'reports'], // Ensure reports are loaded
     });
-
+  
     if (!reply) {
+      console.log('Reply not found');
       throw new NotFoundException('Reply not found');
     }
-
-    if (reply.user.id !== userId) {
+  
+    console.log(`Reply found: ${reply.id}, Content: ${reply.content}`);
+    console.log(`Reports associated with reply:`, reply.reports);
+  
+    // Check if the reply has any reports
+    if (reply.reports && reply.reports.length > 0) {
+      console.log('This reply has been reported. Deletion is not allowed.');
+      // If there are reports, prevent deletion
+      throw new ForbiddenException('This reply cannot be deleted because it has been reported.');
+    }
+  
+    // Check if the user is the owner of the reply or an admin
+    const ownerUser = reply.user && reply.user.id === userId;
+    const ownerAdmin = role === 'admin' && reply.admin && reply.admin.id === userId;
+  
+    console.log(`Is the user the owner of the reply? ${ownerUser}`);
+    console.log(`Is the user an admin? ${ownerAdmin}`);
+  
+    // If the user is neither the owner nor an admin, deny deletion
+    if (!ownerAdmin && !ownerUser) {
+      console.log('User does not have permission to delete this reply');
       throw new ForbiddenException('You do not have permission to delete this reply');
     }
-
+  
+    console.log('All checks passed. Deleting the reply...');
+    // If all checks pass, proceed with deletion
     await this.commentRepository.remove(reply);
+    console.log('Reply deleted successfully');
   }
+  
 
 
   getUserComment(id: number): Promise<Comment[]> {
@@ -378,11 +348,13 @@ export class CommentService {
   }
 
 
+  /////////////////////////////////////
+  /////////// for admin
 
   async deleteUserComment(adminId: number, commentId: number): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
-      relations: ['user', 'folder'],
+      relations: ['user', 'folder', 'reports'],
     });
 
     if (!comment) {
@@ -394,10 +366,11 @@ export class CommentService {
       throw new ForbiddenException('Only admins can delete this comment.');
     }
 
-    // Ensure the commentId is not undefined or null
     if (!commentId) {
       throw new BadRequestException('Invalid comment ID');
     }
+
+    await this.reportRepository.delete({ comment: { id: commentId } });
 
     await this.commentRepository.delete(commentId);
     return comment;
@@ -406,7 +379,7 @@ export class CommentService {
   async deleteUserReply(adminId: number, replyId: number): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
       where: { id: replyId },
-      relations: ['user', 'folder', 'parent', 'replies'],
+      relations: ['user', 'folder', 'parent', 'replies', 'reports'],
     });
 
     if (!comment) {
@@ -418,10 +391,10 @@ export class CommentService {
       throw new ForbiddenException('Only admins can delete this reply.');
     }
 
-    // Ensure the commentId is not undefined or null
     if (!replyId) {
       throw new BadRequestException('Invalid comment ID');
     }
+    await this.reportRepository.delete({ reply: { id: replyId } });
 
     await this.commentRepository.delete(replyId);
     return comment;
