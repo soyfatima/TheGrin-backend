@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Report } from 'src/report.entity';
@@ -6,6 +6,7 @@ import { User } from 'src/user.entity';
 import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { CustomLogger } from 'src/logger/logger.service';
+import { NotificationService } from './notification.service';
 
 @Injectable()
 export class ReportService {
@@ -18,8 +19,8 @@ export class ReportService {
         private readonly commentRepository: Repository<Comment>,
         @InjectRepository(Folder)
         private folderRepository: Repository<Folder>,
-    private readonly logger: CustomLogger,
-
+        private readonly logger: CustomLogger,
+        private notificationService: NotificationService
 
     ) { }
 
@@ -28,57 +29,57 @@ export class ReportService {
     async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report>): Promise<Report> {
         // Find the reported user by ID
         const reportedUser = await this.userRepository.findOne({ where: { id: reportedUserId } });
-    
+
         if (!reportedUser) {
             throw new NotFoundException('User not found');
         }
-    
+
         // Check if the reported user is banned
         if (reportedUser.status === 'banned') {
             throw new ConflictException('This user has already been banned');
         }
-    
+
         // Find the reporter user by ID
         const reporterUser = await this.userRepository.findOne({ where: { id: UserId } });
-    
+
         if (!reporterUser) {
             throw new NotFoundException('Reporter not found');
         }
-    
+
         // Check if this user has already reported the same user
         const existingReport = await this.reportRepository.findOne({
             where: { user: { id: reportedUser.id }, reporter: { id: UserId } }
         });
-    
+
         if (existingReport) {
             throw new ConflictException('You have already reported this user.');
         }
-    
+
         // Create the new report
         const report = this.reportRepository.create({
             ...reportData,
             reporter: { id: UserId },
             user: { id: reportedUser.id }
         });
-    
+
         await this.reportRepository.save(report);
-    
+
         // Count the total number of reports for the reported user
         const reportCount = await this.reportRepository.count({ where: { user: { id: reportedUser.id } } });
-    
+
         // If the report count exceeds 2, block and ban the reported user
         if (reportCount > 1) {
             await this.userRepository.update(reportedUser.id, {
                 blocked: true,
                 status: 'banned'
             });
-    
+
             await this.reportRepository.delete({ user: { id: reportedUser.id } });
         }
-    
+
         return report;
     }
-    
+
 
 
 
@@ -138,9 +139,16 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 4) {
+        if (reportCount >= 2) {
+            await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(commentId);
+
+            const folderName = comment.folder.title; // assuming the folder has a 'name' property
+            const message = `Votre commentaire dans le dossier "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
+
+            await this.notificationService.createNotifForWarning(reportedUser.id, message);
         }
+
         return report;
     }
 
@@ -192,8 +200,14 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 4) {
+        if (reportCount >= 2) {
+            await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(replyId);
+
+            const folderName = reply.folder.title; // assuming the folder has a 'name' property
+            const message = `Votre commentaire dans le dossier "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
+
+            await this.notificationService.createNotifForWarning(reportedUser.id, message);
         }
 
         return report;
@@ -243,14 +257,46 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 4) {
+        if (reportCount >= 2) {
+            await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(folderId);
+            const folderName = folder.title; // assuming the folder has a 'name' property
+            const message = `Votre dossier "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
+
+            await this.notificationService.createNotifForWarning(reportedUser.id, message);
+
         }
 
         return report;
     }
 
 
+    async incrementUserWarningCount(userId: number): Promise<void> {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        console.log(`Current warning count for user ${userId}: ${user.warningCount}`);
+
+        user.warningCount = (user.warningCount || 0) + 1;
+
+        // Log updated warning count
+        console.log(`Updated warning count for user ${userId}: ${user.warningCount}`);
+
+        // If warning count exceeds threshold (example 2), block the user
+        if (user.warningCount >= 2) {
+            user.blocked = true;
+            user.status = 'banned';
+            console.log(`User ${userId} is now blocked due to warning count.`);
+        }
+
+        try {
+            await this.userRepository.save(user);
+            console.log(`User ID ${userId} warning count incremented to ${user.warningCount}`);
+        } catch (error) {
+            console.error(`Error saving user ${userId}: `, error);
+            throw new InternalServerErrorException('Failed to save user warning count');
+        }
+    }
 
 
 }

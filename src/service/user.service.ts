@@ -89,6 +89,7 @@ export class UserService {
             user.status = 'banned';
 
         } else {
+            user.warningCount = 0;
             user.status = 'active';
         }
 

@@ -89,7 +89,7 @@ export class User {
   @Column({ type: 'enum', enum: ['active', 'restricted', 'banned','left'], default: 'active' })
   status: string;
 
-  @Column({ default: 10000000 }) // Limit number of messages per day
+  @Column({ default: 10000000 })
   message_limit: number;
 
   @OneToMany(() => Message, (message) => message.sender)
@@ -113,4 +113,8 @@ export class User {
 
   @Column({ type: 'timestamp', nullable: true })
   deletionRequestedAt: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  warningCount: number;
+  
 }

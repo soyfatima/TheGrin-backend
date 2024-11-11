@@ -17,12 +17,6 @@ export class Report {
     @JoinColumn({ name: 'userId' })
     user: User;
     
-    // @ManyToOne(() => Comment, (comment) => comment.reports, { onDelete: 'CASCADE' })
-    // comment: Comment;
-
-    //@ManyToOne(() => Comment, (comment) => comment.reports)
-    // reply: Comment; 
-    
     @ManyToOne(() => Comment, (comment) => comment.reports, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'commentId' })
     comment: Comment;

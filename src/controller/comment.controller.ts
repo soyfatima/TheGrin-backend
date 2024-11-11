@@ -16,6 +16,7 @@ import {
   Delete,
   HttpException,
   HttpStatus,
+  Patch,
 } from '@nestjs/common';
 import { CommentService } from 'src/service/comment.service';
 import { Comment } from 'src/comment.entity';
@@ -184,5 +185,7 @@ export class CommentController {
     const adminId = (req.user as { userId: number }).userId;
     return this.commentService.deleteUserReply(adminId, replyId);
   }
+
+
 
 }

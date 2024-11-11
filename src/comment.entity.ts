@@ -57,5 +57,7 @@ export class Comment {
   @OneToMany(() => Report, (report) => report.comment, { cascade: ['remove'], onDelete: 'CASCADE' })
   reports: Report[];
 
+  // @OneToMany(() => Report, (report) => report.comment, { cascade: ['remove'] })
+  // reports: Report[];
 
 }

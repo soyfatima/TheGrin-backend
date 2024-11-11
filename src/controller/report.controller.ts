@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ReportService } from "src/service/report.service";
 import { Report } from 'src/report.entity';
@@ -60,4 +60,18 @@ export class ReportController {
         return this.reportService.createReportByFolder(folderId, reporterUserId, reportData);
     }
 
+
+    
+  @Patch(':userId/warnings')
+  @UseGuards(JwtAuthGuard)
+  async incrementUserWarnings(@Param('userId') userId: number): Promise<void> {
+    try {
+      console.log(`Attempting to increment warning count for user ID: ${userId}`);
+      await this.reportService.incrementUserWarningCount(userId);
+      console.log(`User ID: ${userId} warning count incremented successfully`);
+    } catch (error) {
+      console.error(`Error incrementing warning count for user ID: ${userId}`, error);
+      throw error;
+    }
+  }
 }

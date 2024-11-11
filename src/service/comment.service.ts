@@ -244,30 +244,6 @@ export class CommentService {
 
   }
 
-  async deleteComment(commentId: number, userId: number, role: string): Promise<void> {
-    const comment = await this.commentRepository.findOne({
-      where: { id: commentId },
-      relations: ['user', 'folder', 'admin', 'reports']
-    });
-
-    if (!comment) {
-      throw new NotFoundException('Comment not found');
-    }
-
-    // Check if the comment has any reports
-  if (comment.reports && comment.reports.length > 0) {
-    throw new ForbiddenException('This comment cannot be deleted because it has been reported.');
-  }
-    const ownerUser = comment.user && comment.user.id === userId;
-    const ownerAdmin = role === 'admin' && comment.admin && comment.admin.id === userId;
-
-    if (!ownerUser && !ownerAdmin) {
-      throw new ForbiddenException('You do not have permission to delete this comment');
-    }
-
-    await this.commentRepository.remove(comment);
-  }
-
   async updateReply(userId: number, id: number, folderId: number, content: string, role: string): Promise<Comment> {
     const reply = await this.commentRepository.findOne({
       where: { id: id },
@@ -288,51 +264,59 @@ export class CommentService {
     return reply;
   }
 
+  async deleteComment(commentId: number, userId: number, role: string): Promise<void> {
+    const comment = await this.commentRepository.findOne({
+      where: { id: commentId },
+      relations: ['user', 'folder', 'admin', 'reports']
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (user?.status === 'banned' || user?.blocked) {
+      throw new ForbiddenException('Your account is banned and cannot perform this action');
+    }
+
+    const ownerUser = comment.user && comment.user.id === userId;
+    const ownerAdmin = role === 'admin' && comment.admin && comment.admin.id === userId;
+
+    if (!ownerUser && !ownerAdmin) {
+      throw new ForbiddenException('You do not have permission to delete this comment');
+    }
+
+    await this.commentRepository.remove(comment);
+  }
+
   async deleteReply(replyId: number, userId: number, role: string): Promise<void> {
-    console.log(`Attempting to delete reply with ID: ${replyId}, by user ID: ${userId}, role: ${role}`);
-  
-    // Fetch the reply along with its reports and related entities
     const reply = await this.commentRepository.findOne({
       where: { id: replyId },
-      relations: ['user', 'admin', 'reports'], // Ensure reports are loaded
+      relations: ['user', 'admin', 'reports'],
     });
-  
+
     if (!reply) {
-      console.log('Reply not found');
       throw new NotFoundException('Reply not found');
     }
-  
-    console.log(`Reply found: ${reply.id}, Content: ${reply.content}`);
-    console.log(`Reports associated with reply:`, reply.reports);
-  
-    // Check if the reply has any reports
-    if (reply.reports && reply.reports.length > 0) {
-      console.log('This reply has been reported. Deletion is not allowed.');
-      // If there are reports, prevent deletion
-      throw new ForbiddenException('This reply cannot be deleted because it has been reported.');
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (user?.status === 'banned' || user?.blocked) {
+      throw new ForbiddenException('Your account is banned and cannot perform this action');
     }
-  
-    // Check if the user is the owner of the reply or an admin
+
     const ownerUser = reply.user && reply.user.id === userId;
-    const ownerAdmin = role === 'admin' && reply.admin && reply.admin.id === userId;
-  
-    console.log(`Is the user the owner of the reply? ${ownerUser}`);
-    console.log(`Is the user an admin? ${ownerAdmin}`);
-  
-    // If the user is neither the owner nor an admin, deny deletion
-    if (!ownerAdmin && !ownerUser) {
-      console.log('User does not have permission to delete this reply');
+    const isAdmin = role === 'admin';
+
+    if (!isAdmin && !ownerUser) {
       throw new ForbiddenException('You do not have permission to delete this reply');
     }
-  
-    console.log('All checks passed. Deleting the reply...');
-    // If all checks pass, proceed with deletion
+
     await this.commentRepository.remove(reply);
-    console.log('Reply deleted successfully');
   }
+
+
+
   
-
-
   getUserComment(id: number): Promise<Comment[]> {
     return this.commentRepository.find({
       where: { user: { id: id } },
