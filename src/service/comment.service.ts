@@ -163,13 +163,12 @@ export class CommentService {
     }
 
     // Create the reply comment
-
-    // Create the reply comment
     const reply = this.commentRepository.create({
       content,
       user: role === 'admin' ? null : { id: userId },  // Assign user if not admin
       admin: role === 'admin' ? { id: userId } : null,  // Assign admin if it's an admin role
-      parent: parentComment
+      parent: parentComment,
+    //  folder: parentComment.folder,
     });
 
     let savedReply;

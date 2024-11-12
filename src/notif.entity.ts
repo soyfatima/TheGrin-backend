@@ -24,7 +24,7 @@ export class Notification {
   @ManyToOne(() => Comment, comment => comment.notifications, { onDelete: 'CASCADE' })
   comment: Comment;
 
-  @ManyToOne(() => Folder, { nullable: true }) // Define Folder relation if used
+  @ManyToOne(() => Folder, { onDelete: 'CASCADE', nullable: true }) 
   folder: Folder;
 
   @ManyToOne(() => User, { nullable: true })

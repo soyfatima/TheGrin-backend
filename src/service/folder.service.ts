@@ -113,7 +113,7 @@ export class FolderService {
       throw new Error('Folder not found or you do not have permission to delete this folder');
     }
 
-    await this.folderRepository.remove(folder); // Use remove to ensure proper entity deletion
+    await this.folderRepository.remove(folder);
   }
 
   //get folderdetails by ID

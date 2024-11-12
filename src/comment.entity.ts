@@ -51,13 +51,7 @@ export class Comment {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // @ManyToOne(() => Admin, admin => admin.comments, { nullable: true })
-  // admin: Admin;
-
   @OneToMany(() => Report, (report) => report.comment, { cascade: ['remove'], onDelete: 'CASCADE' })
   reports: Report[];
-
-  // @OneToMany(() => Report, (report) => report.comment, { cascade: ['remove'] })
-  // reports: Report[];
 
 }

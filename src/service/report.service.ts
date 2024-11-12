@@ -68,7 +68,7 @@ export class ReportService {
         const reportCount = await this.reportRepository.count({ where: { user: { id: reportedUser.id } } });
 
         // If the report count exceeds 2, block and ban the reported user
-        if (reportCount > 1) {
+        if (reportCount > 5) {
             await this.userRepository.update(reportedUser.id, {
                 blocked: true,
                 status: 'banned'
@@ -80,12 +80,8 @@ export class ReportService {
         return report;
     }
 
-
-
-
     async createReportByComment(commentId: number, UserId: number, reportData: Partial<Report>): Promise<Report> {
-
-        const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user'] });
+        const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user','folder'] });
         if (!comment) {
             throw new NotFoundException('This comment has already been deleted.');
         }
@@ -139,13 +135,12 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 2) {
+        if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(commentId);
 
-            const folderName = comment.folder.title; // assuming the folder has a 'name' property
-            const message = `Votre commentaire dans le dossier "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
-
+            const folderName =comment.folder?.title;
+            const message = `Votre commentaire sur le poste "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
             await this.notificationService.createNotifForWarning(reportedUser.id, message);
         }
 
@@ -153,11 +148,11 @@ export class ReportService {
     }
 
     async createReportByReply(replyId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
-        // Fetch the reply along with its associated user
         const reply = await this.commentRepository.findOne({
             where: { id: replyId },
             relations: ['user', 'folder', 'parent', 'replies']
         });
+        console.log('Reply:', reply);
 
         if (!reply) {
             throw new NotFoundException('This reply has already been deleted.');
@@ -200,20 +195,18 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 2) {
+        if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(replyId);
 
-            const folderName = reply.folder.title; // assuming the folder has a 'name' property
-            const message = `Votre commentaire dans le dossier "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
+            const folderTitle = reply.folder?.title
+            const message = `Votre réponse sur le poste "${folderTitle}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
 
             await this.notificationService.createNotifForWarning(reportedUser.id, message);
         }
 
         return report;
     }
-
-
 
     async createReportByFolder(folderId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
         const folder = await this.folderRepository.findOne({ where: { id: folderId }, relations: ['user'] });
@@ -257,14 +250,12 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 2) {
+        if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
-            await this.commentRepository.delete(folderId);
+            await this.folderRepository.delete(folderId);
             const folderName = folder.title; // assuming the folder has a 'name' property
-            const message = `Votre dossier "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
-
+            const message = `Votre poste "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
             await this.notificationService.createNotifForWarning(reportedUser.id, message);
-
         }
 
         return report;
@@ -279,11 +270,9 @@ export class ReportService {
 
         user.warningCount = (user.warningCount || 0) + 1;
 
-        // Log updated warning count
         console.log(`Updated warning count for user ${userId}: ${user.warningCount}`);
 
-        // If warning count exceeds threshold (example 2), block the user
-        if (user.warningCount >= 2) {
+        if (user.warningCount >= 12) {
             user.blocked = true;
             user.status = 'banned';
             console.log(`User ${userId} is now blocked due to warning count.`);

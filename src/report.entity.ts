@@ -25,7 +25,7 @@ export class Report {
     @JoinColumn({ name: 'replyId' })
     reply: Comment;
     
-    @ManyToOne(() => Folder, (folder) => folder.reports)
+    @ManyToOne(() => Folder, (folder) => folder.reports, {onDelete:'CASCADE'})
     folder: Folder;
 
     @Column()
