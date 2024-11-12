@@ -253,7 +253,7 @@ export class ReportService {
         if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.folderRepository.delete(folderId);
-            const folderName = folder.title; // assuming the folder has a 'name' property
+            const folderName = folder.title; 
             const message = `Votre poste "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
             await this.notificationService.createNotifForWarning(reportedUser.id, message);
         }
