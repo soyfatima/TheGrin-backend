@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, Req, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ReportService } from "src/service/report.service";
 import { Report } from 'src/report.entity';
@@ -15,24 +15,20 @@ export class ReportController {
 
 
 
-    @UseGuards(JwtAuthGuard)
     @Post('report/user/:userId')
+    @UseGuards(JwtAuthGuard)
     async reportUser(
         @Param('userId') reportedUserId: number,
         @Req() req,
         @Body() reportData: Partial<Report>
     ): Promise<Report> {
         const reporterUserId = (req.user as { userId: number }).userId;
-        const accessToken = req.headers['authorization']?.split(' ')[1]; // Get the access token from Authorization header
-        if (!accessToken) {
-            throw new UnauthorizedException('Access token is required');
-        }
-    
-        return this.reportService.reportUser(reporterUserId, reportedUserId, reportData, accessToken)
+        
+        return this.reportService.reportUser(reporterUserId, reportedUserId, reportData, req)
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post('report/comment/:commentId')
+    @UseGuards(JwtAuthGuard)
     async reportComment(
         @Param('commentId') commentId: number,
         @Req() req,
@@ -42,8 +38,8 @@ export class ReportController {
         return this.reportService.createReportByComment(commentId, reporterUserId, reportData);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post('report/reply/:replyId')
+    @UseGuards(JwtAuthGuard)
     async createReportByReply(
         @Param('replyId') replyId: number,
         @Req() req,
@@ -54,8 +50,8 @@ export class ReportController {
     }
 
 
-    @UseGuards(JwtAuthGuard)
     @Post('report/folder/:folderId')
+    @UseGuards(JwtAuthGuard)
     async createReportByFolder(
         @Param('folderId') folderId: number,
         @Req() req,

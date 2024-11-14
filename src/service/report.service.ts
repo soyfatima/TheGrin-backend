@@ -27,7 +27,7 @@ export class ReportService {
 
 
 
-    async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report> ,accessToken: string): Promise<Report> {
+    async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report> , req: Request): Promise<Report> {
         // Find the reported user by ID
         const reportedUser = await this.userRepository.findOne({ where: { id: reportedUserId } });
 
@@ -75,10 +75,22 @@ export class ReportService {
                 blocked: true,
                 status: 'banned'
             });
-              // Call the logout method to disconnect the banned user
-        await this.authService.logout(accessToken); // Assuming you have access to the user's token
+        
+
+            console.log(`User ${reportedUserId} has been banned`);
+
+            // Call the auth service to logout the banned user
+            const accessToken = req.headers['authorization']?.replace('Bearer ', ''); // Get the token from the request header
+    
+            if (accessToken) {
+                console.log(`Logging out banned user ${reportedUserId}`);
+                await this.authService.logout(accessToken); // Pass the user's access token to logout
+                console.log(`User ${reportedUserId} has been logged out`);
+            }
+    
 
             await this.reportRepository.delete({ user: { id: reportedUser.id } });
+            console.log(`Deleted all reports for banned user ${reportedUserId}`);
         }
 
         return report;

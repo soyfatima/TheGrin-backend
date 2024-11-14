@@ -28,8 +28,8 @@ export class OrderController {
 
   ) { }
 
-  @UseGuards(JwtAuthGuard)
   @Post('global')
+  @UseGuards(JwtAuthGuard)
   async createOrder(@Request() req,
     @Body() orderData: Partial<Order>
   ): Promise<Order> {
@@ -38,8 +38,8 @@ export class OrderController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
   @Post('single')
+  @UseGuards(JwtAuthGuard)
   async orderSingle(@Request() req, @Body() orderData: Partial<Order>, @Query('itemId') itemId?: number) {
     const userId = (req.user as { userId: number }).userId;
     try {
@@ -50,8 +50,8 @@ export class OrderController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('fetchOrders')
+  @UseGuards(JwtAuthGuard)
   async fetchOrder() {
     try {
       const orders = await this.OrderService.getAllOrders();
@@ -62,8 +62,8 @@ export class OrderController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getOrderById(@Param('id') id: number): Promise<Order> {
     const order = await this.OrderService.findOrderById(id);
     if (!order) {
@@ -73,15 +73,15 @@ export class OrderController {
   }
 
   //delete Order
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async deleteOrder(
     @Param('id') id: number): Promise<void> {
     await this.OrderService.deleteOrder(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('')
+  @UseGuards(JwtAuthGuard)
   public async DeleteAllOrder(@Req() req: Request) {
     try {
       return await this.OrderService.DeleteAllOrder();
@@ -91,15 +91,15 @@ export class OrderController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
   @Delete('')
+  @UseGuards(JwtAuthGuard)
   async deleteOrderNotification(
     @Param('id') id: number): Promise<void> {
     await this.OrderService.deleteOrderAndRelatedNotifications(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('')
+  @UseGuards(JwtAuthGuard)
   public async deleteAllOrderNotifications(@Req() req: Request) {
     try {
       await this.OrderService.deleteAllOrderNotifications();

@@ -50,10 +50,13 @@ import { ReportService } from './service/report.service';
 import { ReportController } from './controller/report.controller';
 import { LoggerModule } from './logger/logger.module'; 
 import { Contact } from './contact.entity';
+import { BannedGuard } from './jwtGuard/banned.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
     LoggerModule,
+    JwtModule.register({}),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -119,7 +122,12 @@ import { Contact } from './contact.entity';
     UserService,
     MessagingService,
     MessagingGateway, 
-    ReportService
+    ReportService,
+    {
+      provide: APP_GUARD,
+      useClass: BannedGuard, // Register the guard as a global guard
+    },
   ],
+
 })
 export class AppModule { }

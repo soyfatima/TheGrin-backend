@@ -19,6 +19,7 @@ import {
   HttpStatus,
   Patch,
   HttpException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -30,6 +31,7 @@ import { UserService } from 'src/service/user.service';
 import { User } from 'src/user.entity';
 import { CustomLogger } from 'src/logger/logger.service';
 import { Contact } from 'src/contact.entity';
+import { BannedGuard } from 'src/jwtGuard/banned.guard';
 
 
 @Controller('users')
@@ -39,8 +41,8 @@ export class UserController {
 
   ) { }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':id/update')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('uploadedFile', multerOptions))
   async updateUserInfo(
     @UploadedFile() file: Express.Multer.File,
@@ -64,8 +66,8 @@ export class UserController {
   }
 
   //delete picture
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/deletePicture')
+  @UseGuards(JwtAuthGuard)
   async deleteProfilPic(
     @Req() req,
     @Param('id', ParseIntPipe) userId: number
@@ -77,13 +79,17 @@ export class UserController {
     return await this.userService.deleteProfilPic(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('user/:id')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async getUserInfo(@Param('id') id: number) {
     const user = await this.userService.getUserInfo(id);
     if (!user) {
       throw new NotFoundException('User not found');
     }
+  //   // Check if the user is banned
+  //   if (user.status === 'banned') {  // Ensure this matches the status options in the User entity
+  //     throw new ForbiddenException('User is banned');
+  // }
     return user;
   }
 
@@ -96,9 +102,8 @@ export class UserController {
     return admin; // Return the admin data here
   }
 
-  @UseGuards(JwtAuthGuard)
-  // @Patch('blockUser')
   @Patch('blockUser/:id')
+  @UseGuards(JwtAuthGuard)
   async blockUser(
     @Param('id') id: number,
     @Body() body: { blocked: boolean },
@@ -113,8 +118,8 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('GetAllUser')
+  @UseGuards(JwtAuthGuard)
   async getAllUser(): Promise<User[]> {
     return await this.userService.getAllUser()
   }

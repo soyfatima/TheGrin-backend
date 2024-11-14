@@ -29,6 +29,7 @@ import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { folderFileOptions } from 'src/fileOption';
 import { adminFileOptions } from 'src/adminFileOption';
 import { CustomLogger } from 'src/logger/logger.service';
+import { BannedGuard } from 'src/jwtGuard/banned.guard';
 
 @Controller('folders')
 export class FolderController {
@@ -38,8 +39,8 @@ export class FolderController {
   ) { }
 
   //create folder 
-  @UseGuards(JwtAuthGuard)
   @Post('create')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   @UseInterceptors(FileInterceptor('uploadedFile', folderFileOptions))
   async createFolder(
     @UploadedFile() file,
@@ -70,6 +71,7 @@ export class FolderController {
       );
     }
   }
+  
   //fetch folder and folderdetails
   //@UseGuards(JwtAuthGuard)
   @Get('user-folders/:id')
@@ -86,8 +88,8 @@ export class FolderController {
     return await this.FolderService.getAllFolders();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async updateFolderContent(
     @Req() req: any,
     @Param('id') id: number,
@@ -99,9 +101,8 @@ export class FolderController {
   }
 
   //delete folder
-
-  @UseGuards(JwtAuthGuard)
   @Delete('delete/:id')
+  @UseGuards(JwtAuthGuard)
   async deleteFolder(
     @Param('id') id: number,
     @Req() req,
@@ -220,8 +221,8 @@ export class FolderController {
     userId = (req.user as { userId: number }).userId
     await this.FolderService.markNoteAsRead(noteId, userId);
   }
-  @UseGuards(JwtAuthGuard)
   @Delete(':folderId')
+  @UseGuards(JwtAuthGuard)
   async deleteUserFolder(
     @Param('folderId') folderId: number,
     @Req() req,

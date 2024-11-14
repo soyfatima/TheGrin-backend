@@ -13,16 +13,16 @@ export class CartController {
   ) { }
 
   //user cart
-  @UseGuards(JwtAuthGuard)
   @Get('userCart')
+  @UseGuards(JwtAuthGuard)
   async getUserCart(@Request() req) {
     const userId = (req.user as { userId: number }).userId;
     const cart = await this.cartService.getUserCart(userId);
     return cart;
   }
   //add item with quantity select to cart
-  @UseGuards(JwtAuthGuard)
   @Post('addToCartWithQuantity')
+  @UseGuards(JwtAuthGuard)
   async addToCartWithQuantity(@Request() req, @Body() body) {
     const userId = (req.user as { userId: number }).userId;
     const { productId, quantity } = body;
@@ -40,8 +40,8 @@ export class CartController {
   }
   
   //add item to cart
-  @UseGuards(JwtAuthGuard)
   @Post('addToCart')
+  @UseGuards(JwtAuthGuard)
   async addToCart1(@Request() req, @Body('productId') productId: number) {
     const userId = (req.user as { userId: number }).userId;
     try {
@@ -58,8 +58,8 @@ export class CartController {
   }
 
   // get cart totalprice before order
-  @UseGuards(JwtAuthGuard)
   @Post('getTotalCartPrice')
+  @UseGuards(JwtAuthGuard)
   async processPayment(@Request() req) {
     const userId = (req.user as { userId: number }).userId;
     const { totalPrice, totalQuantity } = await this.cartService.getTotalCartPrice(userId);
@@ -67,8 +67,8 @@ export class CartController {
   }
 
   //remove cartItem from cart
-  @UseGuards(JwtAuthGuard)
   @Delete('remove/:productId')
+  @UseGuards(JwtAuthGuard)
   async removeFromCart(
     @Request() req,
     @Param('productId', ParseIntPipe) productId: number,
@@ -78,23 +78,23 @@ export class CartController {
   }
   
   //update cartItem
-  @UseGuards(JwtAuthGuard)
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async updateCartItem(@Request() req, @Param('id') id: number, @Body() updateData: Partial<CartItem>) {
     const userId = (req.user as { userId: number }).userId;
     return this.cartService.updateCartItem(userId, id, updateData);
   }
   //update cartItem from cart
-  @UseGuards(JwtAuthGuard)
   @Put('cart/:id')
+  @UseGuards(JwtAuthGuard)
   async updateCartItemFromCart(@Request() req, @Param('id') id: number, @Body() updateData: Partial<CartItem>) {
     const userId = (req.user as { userId: number }).userId;
     return this.cartService.updateCartItemFromCart(userId, id, updateData);
   }
   
   //get single item price
-  @UseGuards(JwtAuthGuard)
   @Get('item/:itemId')
+  @UseGuards(JwtAuthGuard)
   async getSingleItemPrice(
     @Request() req,
     @Param('itemId') itemId: number,

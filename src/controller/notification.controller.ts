@@ -12,8 +12,8 @@ export class NotificationController {
     ) { }
 
     //get all notif
-    @UseGuards(JwtAuthGuard)
     @Get('getUserNotification/:id')
+    @UseGuards(JwtAuthGuard)
     async getAllUserNotifications(
         @Param('id') id:number,
         @Req() req: any): Promise<Notification[]> {
@@ -21,21 +21,21 @@ export class NotificationController {
       return await this.notificationService.getAllUserNotifications(userId);
     }
     
-    @UseGuards(JwtAuthGuard)
     @Get('admin/OrderNotification')
+    @UseGuards(JwtAuthGuard)
     async getOrderNotification(): Promise<Notification[]> {
       return await this.notificationService.getOrderNotification();
     }
     
     //get notif by id
-    @UseGuards(JwtAuthGuard)
     @Get(':id')
+    @UseGuards(JwtAuthGuard)
     async getUserNotificationById(@Param('id') id: number, @Req() req: any) {
-        return this.notificationService.getUserNotificationById(id); // Fetch by notification ID
+        return this.notificationService.getUserNotificationById(id);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Put(':id/read')
+    @UseGuards(JwtAuthGuard)
     async markAsRead(@Param('id') id: number): Promise<void> {
         await this.notificationService.markAsRead(id);
     }
@@ -43,8 +43,8 @@ export class NotificationController {
 
 
     //delete user notif
-    @UseGuards(JwtAuthGuard)
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     async deleteUserNotification(
         @Param('id') id: number,
         @Req() req: any
@@ -55,8 +55,8 @@ export class NotificationController {
     }
 
     //delete all notif
-    @UseGuards(JwtAuthGuard)
     @Delete('')
+    @UseGuards(JwtAuthGuard)
     public async deleteAllUserNotifications(@Req() req: any): Promise<void> {
         const userId = (req.user as { userId: number }).userId;
 

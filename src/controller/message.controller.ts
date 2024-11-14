@@ -12,8 +12,8 @@ export class MessagingController {
 
     ) { }
 
-    @UseGuards(JwtAuthGuard)
     @Post('send/:id')
+    @UseGuards(JwtAuthGuard)
     async sendMessage(
         @Param('id') id: number,
         @Body()
@@ -25,8 +25,8 @@ export class MessagingController {
 
     }
 
-    @UseGuards(JwtAuthGuard)
     @Get('conversation/:id')
+    @UseGuards(JwtAuthGuard)
     async getMessages(
       @Param('id') recipientId: number, 
       @Req() req: Request                       
@@ -36,8 +36,8 @@ export class MessagingController {
       return { messages };
     }
 
-  @UseGuards(JwtAuthGuard)
   @Get('senders')
+  @UseGuards(JwtAuthGuard)
   async getSenders(@Query('id') id: number,
   @Req() req: Request                      
 ) {
@@ -45,8 +45,8 @@ export class MessagingController {
     return this.messagingService.getSenders(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post('markAsRead')
+  @UseGuards(JwtAuthGuard)
   async markMessagesAsRead(@Body() body: { userId: number; recipientId: number }): Promise<void> {
     const { userId, recipientId } = body;
     await this.messagingService.markMessagesAsRead(userId, recipientId);

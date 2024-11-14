@@ -56,8 +56,8 @@ export class AuthController {
   ) { }
 
   //refresh token
-  @UseGuards(JwtAuthGuard)
   @Post('refresh-token')
+  @UseGuards(JwtAuthGuard)
   async refreshAccessToken(
     @Body() { refreshToken }: { refreshToken: string },
   ): Promise<{ accessToken: string }> {

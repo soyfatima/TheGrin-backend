@@ -24,8 +24,8 @@ export class ProductController {
 
     ) { }
 
-    @UseGuards(JwtAuthGuard)
     @Post('create')
+    @UseGuards(JwtAuthGuard)
     @UseInterceptors(FileInterceptor('uploadedFile', ProdFileOptions))
     async createProduct(
       @UploadedFile() file,
@@ -52,8 +52,8 @@ export class ProductController {
   
 
     //update Product
-    @UseGuards(JwtAuthGuard)
     @Put(':id')
+    @UseGuards(JwtAuthGuard)
     async updateFolder(
         @Param('id') id: number,
         @Body() updatedProductData: Partial<Product>,
@@ -62,8 +62,8 @@ export class ProductController {
     }
 
     //delete Product
-    @UseGuards(JwtAuthGuard)
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
     async deleteProduct(
         @Param('id') id: number): Promise<void> {
         await this.ProductService.deleteProduct(id);

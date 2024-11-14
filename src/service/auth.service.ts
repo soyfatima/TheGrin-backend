@@ -199,17 +199,6 @@ export class AuthService {
       throw new UnauthorizedException(error.message);
     }
   }
-  
-  // async logout(accessToken: string): Promise<void> {
-  //   try {
-  //     const decodedToken = this.jwtService.verify(accessToken);
-  //     const userId = decodedToken.userId;
-  //     return; 
-  //   } catch (error) {
-  //     this.logger.error('Error verifying token during logout:', error);
-  //     throw new UnauthorizedException('Invalid access token');
-  //   }
-  // }
 
   async logout(accessToken: string): Promise<void> {
     try {

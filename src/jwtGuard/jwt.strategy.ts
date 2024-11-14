@@ -14,12 +14,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       refreshTokenSecret: jwtConfig.refreshTokenSecret,
     });
   }
-
-  // async validate(payload: any) {
-  //   return { userId: payload.userId };
-  // }
+ 
   async validate(payload: any) {
     return { userId: payload.userId, role: payload.role };
   }
   
+   // async validate(payload: any) {
+  //   return { userId: payload.userId };
+  // }
 }

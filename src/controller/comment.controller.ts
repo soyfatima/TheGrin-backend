@@ -25,6 +25,7 @@ import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { User } from 'src/user.entity';
 import { Report } from 'src/report.entity';
 import { CustomLogger } from 'src/logger/logger.service';
+import { BannedGuard } from 'src/jwtGuard/banned.guard';
 export class CommentDto {
   content: string;
 }
@@ -37,10 +38,8 @@ export class CommentController {
   ) { }
 
   // Add a comment
-
-
-  @UseGuards(JwtAuthGuard)
   @Post(':folderId')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async addComment(
     @Param('folderId') folderId: number,
     @Body() body: Partial<Comment>,
@@ -69,8 +68,8 @@ export class CommentController {
   }
 
   // Add reply to a comment
-  @UseGuards(JwtAuthGuard)
   @Post(':commentId/reply')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async addReply(
     @Req() req: any,
     @Param('commentId', ParseIntPipe) commentId: number,
@@ -82,8 +81,9 @@ export class CommentController {
     return this.commentService.addReply(commentId, content, userId, role);
   }
 
-  @UseGuards(JwtAuthGuard)
+  
   @Put(':id')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async updateComment(
     @Req() req: any,
     @Param('id') id: number,
@@ -95,8 +95,9 @@ export class CommentController {
     return this.commentService.updateComment(userId, id, folderId, content, role);
   }
 
-  @UseGuards(JwtAuthGuard)
+  
   @Delete('delete/:id')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async deleteComment(
     @Param('id') id: number,
     @Req() req,
@@ -115,9 +116,8 @@ export class CommentController {
     }
   }
 
-
-  @UseGuards(JwtAuthGuard)
   @Put('replies/:id')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async updateReply(
     @Req() req: any,
     @Param('id') id: number,
@@ -129,8 +129,8 @@ export class CommentController {
     return this.commentService.updateReply(userId, id, folderId, content, role);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('delete-reply/:id')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async deleteReply(
     @Param('id') id: number,
     @Req() req,
@@ -164,8 +164,8 @@ export class CommentController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':commentId')
+  @UseGuards(JwtAuthGuard)
   async deleteUserComment(
     @Param('commentId') commentId: number,
     @Req() req
