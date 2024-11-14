@@ -7,6 +7,7 @@ import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { CustomLogger } from 'src/logger/logger.service';
 import { NotificationService } from './notification.service';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class ReportService {
@@ -20,13 +21,13 @@ export class ReportService {
         @InjectRepository(Folder)
         private folderRepository: Repository<Folder>,
         private readonly logger: CustomLogger,
-        private notificationService: NotificationService
-
+        private notificationService: NotificationService,
+       private authService: AuthService
     ) { }
 
 
 
-    async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report>): Promise<Report> {
+    async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report> ,accessToken: string): Promise<Report> {
         // Find the reported user by ID
         const reportedUser = await this.userRepository.findOne({ where: { id: reportedUserId } });
 
@@ -62,17 +63,20 @@ export class ReportService {
             user: { id: reportedUser.id }
         });
 
+        console.log('report data', report)
         await this.reportRepository.save(report);
 
         // Count the total number of reports for the reported user
         const reportCount = await this.reportRepository.count({ where: { user: { id: reportedUser.id } } });
 
         // If the report count exceeds 2, block and ban the reported user
-        if (reportCount > 5) {
+        if (reportCount > 2) {
             await this.userRepository.update(reportedUser.id, {
                 blocked: true,
                 status: 'banned'
             });
+              // Call the logout method to disconnect the banned user
+        await this.authService.logout(accessToken); // Assuming you have access to the user's token
 
             await this.reportRepository.delete({ user: { id: reportedUser.id } });
         }
@@ -150,9 +154,8 @@ export class ReportService {
     async createReportByReply(replyId: number, userId: number, reportData: Partial<Report>): Promise<Report> {
         const reply = await this.commentRepository.findOne({
             where: { id: replyId },
-            relations: ['user', 'folder', 'parent', 'replies']
+            relations: ['user', 'folder', 'parent', 'parent.folder', 'replies']
         });
-        console.log('Reply:', reply);
 
         if (!reply) {
             throw new NotFoundException('This reply has already been deleted.');
@@ -195,11 +198,12 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 4) {
+        if (reportCount >= 2) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(replyId);
 
-            const folderTitle = reply.folder?.title
+          //  const folderTitle = reply.folder?.title
+          const folderTitle = reply.parent?.folder?.title;
             const message = `Votre réponse sur le poste "${folderTitle}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
 
             await this.notificationService.createNotifForWarning(reportedUser.id, message);
@@ -254,35 +258,27 @@ export class ReportService {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.folderRepository.delete(folderId);
             const folderName = folder.title; 
-            const message = `Votre poste "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
+             const message = `Votre poste "${folderName}" a été signalé comme contenu inapproprié et a été supprimé. Pour plus d’informations, veuillez consulter les consignes d’utilisation afin d’éviter le bannissement de votre compte.`;
             await this.notificationService.createNotifForWarning(reportedUser.id, message);
         }
 
         return report;
     }
 
-
     async incrementUserWarningCount(userId: number): Promise<void> {
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User not found');
-
-        console.log(`Current warning count for user ${userId}: ${user.warningCount}`);
-
         user.warningCount = (user.warningCount || 0) + 1;
 
-        console.log(`Updated warning count for user ${userId}: ${user.warningCount}`);
-
-        if (user.warningCount >= 12) {
+        if (user.warningCount >= 2) {
             user.blocked = true;
             user.status = 'banned';
-            console.log(`User ${userId} is now blocked due to warning count.`);
         }
 
         try {
             await this.userRepository.save(user);
-            console.log(`User ID ${userId} warning count incremented to ${user.warningCount}`);
         } catch (error) {
-            console.error(`Error saving user ${userId}: `, error);
+            this.logger.error(`Error saving user ${userId}: `, error);
             throw new InternalServerErrorException('Failed to save user warning count');
         }
     }

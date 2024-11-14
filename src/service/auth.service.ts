@@ -12,7 +12,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { jwtConfig } from 'src/jwtGuard/config';
 import { User } from 'src/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -200,18 +200,31 @@ export class AuthService {
     }
   }
   
+  // async logout(accessToken: string): Promise<void> {
+  //   try {
+  //     const decodedToken = this.jwtService.verify(accessToken);
+  //     const userId = decodedToken.userId;
+  //     return; 
+  //   } catch (error) {
+  //     this.logger.error('Error verifying token during logout:', error);
+  //     throw new UnauthorizedException('Invalid access token');
+  //   }
+  // }
+
   async logout(accessToken: string): Promise<void> {
     try {
       const decodedToken = this.jwtService.verify(accessToken);
       const userId = decodedToken.userId;
-      return; 
+      // Perform logout logic (maybe invalidate token here, if needed)
     } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token has expired');
+      }
       this.logger.error('Error verifying token during logout:', error);
       throw new UnauthorizedException('Invalid access token');
     }
   }
   
-
   async generateResetCode(email: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {

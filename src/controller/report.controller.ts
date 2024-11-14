@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post, Req, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ReportService } from "src/service/report.service";
 import { Report } from 'src/report.entity';
@@ -23,7 +23,12 @@ export class ReportController {
         @Body() reportData: Partial<Report>
     ): Promise<Report> {
         const reporterUserId = (req.user as { userId: number }).userId;
-        return this.reportService.reportUser(reporterUserId, reportedUserId, reportData)
+        const accessToken = req.headers['authorization']?.split(' ')[1]; // Get the access token from Authorization header
+        if (!accessToken) {
+            throw new UnauthorizedException('Access token is required');
+        }
+    
+        return this.reportService.reportUser(reporterUserId, reportedUserId, reportData, accessToken)
     }
 
     @UseGuards(JwtAuthGuard)
