@@ -39,7 +39,7 @@ export class CommentController {
 
   // Add a comment
   @Post(':folderId')
-  @UseGuards(JwtAuthGuard, BannedGuard)
+  @UseGuards(JwtAuthGuard)
   async addComment(
     @Param('folderId') folderId: number,
     @Body() body: Partial<Comment>,

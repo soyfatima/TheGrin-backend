@@ -138,28 +138,26 @@ export class NoteService {
     //         throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
     //     }
     // }
+
     async markNoteAsRead(noteId: number, userId: number): Promise<void> {
-        console.log('Received request to mark note as read:', { noteId, userId });
-    
-        const noteReadStatus = await this.userNoteReadStatusRepository.findOne({
+        let noteReadStatus = await this.userNoteReadStatusRepository.findOne({
             where: {
                 note: { id: noteId },
                 user: { id: userId },
             },
         });
     
-        console.log('Fetched note read status:', noteReadStatus);
-    
-        if (noteReadStatus) {
-            noteReadStatus.read = true;
-            console.log('Updating read status for note:', noteId, 'user:', userId, 'read status:', noteReadStatus.read);
-            
+        if (!noteReadStatus) {
+            // Create a new entry if one does not exist
+            noteReadStatus = new UserNoteReadStatus();
+            noteReadStatus.note = { id: noteId } as AdminNotes;  // Assuming AdminNotes is your note entity
+            noteReadStatus.user = { id: userId } as User;
+            noteReadStatus.read = true; // Mark the note as read
             await this.userNoteReadStatusRepository.save(noteReadStatus);
-            console.log('Note read status updated successfully');
         } else {
-            console.warn('No read status found for noteId:', noteId, 'userId:', userId);
-            throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
+            noteReadStatus.read = true;
+            await this.userNoteReadStatusRepository.save(noteReadStatus);
         }
     }
-    
+       
 }

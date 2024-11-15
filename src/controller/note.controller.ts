@@ -124,36 +124,15 @@ import {
     }
   }
 
-//   @Post('mark-note-as-read')
-//   @UseGuards(JwtAuthGuard)
-//   async markNoteAsRead(
-//     @Body('noteId') noteId: number,
-//     @Body('userId') userId: number,
-//     @Req() req,
-//   ): Promise<void> {
-//     userId = (req.user as { userId: number }).userId
-//     await this.NoteService.markNoteAsRead(noteId, userId);
-//   }
-
-@Post('mark-note-as-read')
-@UseGuards(JwtAuthGuard)
-async markNoteAsRead(
+  @Post('mark-note-as-read')
+  @UseGuards(JwtAuthGuard)
+  async markNoteAsRead(
     @Body('noteId') noteId: number,
     @Body('userId') userId: number,
     @Req() req,
-): Promise<void> {
-    console.log('POST request received for mark-note-as-read:', { noteId, userId });
-
-    userId = (req.user as { userId: number }).userId;
-    console.log('Authenticated userId from JWT:', userId);
-
-    try {
-        await this.NoteService.markNoteAsRead(noteId, userId);
-        console.log('Note marked as read successfully');
-    } catch (error) {
-        console.error('Error marking note as read:', error);
-        throw error;  // Rethrow the error to propagate it
-    }
-}
+  ): Promise<void> {
+    userId = (req.user as { userId: number }).userId
+    await this.NoteService.markNoteAsRead(noteId, userId);
+  }
 
 }

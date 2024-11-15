@@ -79,7 +79,7 @@ export class User {
 
   @OneToMany(() => CartItem, cartItem => cartItem.user)
   cartItems: CartItem[];
-
+  
   @OneToMany(() => UserNoteReadStatus, userNoteReadStatus => userNoteReadStatus.user)
   noteReadStatus: UserNoteReadStatus[];
 
