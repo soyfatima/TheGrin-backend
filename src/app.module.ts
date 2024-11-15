@@ -56,7 +56,7 @@ import { APP_GUARD } from '@nestjs/core';
 @Module({
   imports: [
     LoggerModule,
-    JwtModule.register({}),
+    //JwtModule.register({}),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -93,7 +93,6 @@ import { APP_GUARD } from '@nestjs/core';
       },
 
     }),
-    // other modules
 
   ],
   controllers: [
@@ -123,10 +122,7 @@ import { APP_GUARD } from '@nestjs/core';
     MessagingService,
     MessagingGateway, 
     ReportService,
-    {
-      provide: APP_GUARD,
-      useClass: BannedGuard, // Register the guard as a global guard
-    },
+  
   ],
 
 })

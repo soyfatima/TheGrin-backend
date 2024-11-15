@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConfig } from 'src/jwtGuard/config';
-import { BannedGuard } from './banned.guard'; 
+//import { BannedGuard } from './banned.guard'; 
 @Module({
   imports: [
     JwtModule.register({

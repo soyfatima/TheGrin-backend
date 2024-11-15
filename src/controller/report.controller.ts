@@ -13,8 +13,6 @@ export class ReportController {
 
     ) { }
 
-
-
     @Post('report/user/:userId')
     @UseGuards(JwtAuthGuard)
     async reportUser(
@@ -23,7 +21,6 @@ export class ReportController {
         @Body() reportData: Partial<Report>
     ): Promise<Report> {
         const reporterUserId = (req.user as { userId: number }).userId;
-        
         return this.reportService.reportUser(reporterUserId, reportedUserId, reportData, req)
     }
 
@@ -49,7 +46,6 @@ export class ReportController {
         return this.reportService.createReportByReply(replyId, reporterUserId, reportData)
     }
 
-
     @Post('report/folder/:folderId')
     @UseGuards(JwtAuthGuard)
     async createReportByFolder(
@@ -61,17 +57,13 @@ export class ReportController {
         return this.reportService.createReportByFolder(folderId, reporterUserId, reportData);
     }
 
-
-    
   @Patch(':userId/warnings')
   @UseGuards(JwtAuthGuard)
   async incrementUserWarnings(@Param('userId') userId: number): Promise<void> {
     try {
-      console.log(`Attempting to increment warning count for user ID: ${userId}`);
       await this.reportService.incrementUserWarningCount(userId);
-      console.log(`User ID: ${userId} warning count incremented successfully`);
     } catch (error) {
-      console.error(`Error incrementing warning count for user ID: ${userId}`, error);
+      this.logger.error(`Error incrementing warning count for user ID: ${userId}`, error);
       throw error;
     }
   }

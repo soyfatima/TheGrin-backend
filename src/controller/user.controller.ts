@@ -86,10 +86,6 @@ export class UserController {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-  //   // Check if the user is banned
-  //   if (user.status === 'banned') {  // Ensure this matches the status options in the User entity
-  //     throw new ForbiddenException('User is banned');
-  // }
     return user;
   }
 
@@ -99,7 +95,7 @@ export class UserController {
     if (!admin) {
       throw new NotFoundException('Admin not found');
     }
-    return admin; // Return the admin data here
+    return admin;
   }
 
   @Patch('blockUser/:id')

@@ -36,5 +36,4 @@ export class CustomLogger implements LoggerService {
         this.logger.warn(message); // Log warnings
     }
 
-    // Add more methods as needed (debug, verbose, etc.)
 }

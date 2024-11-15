@@ -149,13 +149,11 @@ export class CommentController {
     }
   }
 
-
   @Get('user-comment/:id')
   async getUserComment(
     @Param('id') id: number): Promise<Comment[]> {
     return this.commentService.getUserComment(id)
   }
-
 
   @Get('suggestions')
   async getUserSuggestions(@Query('prefix') prefix: string): Promise<User[]> {
@@ -174,10 +172,8 @@ export class CommentController {
     return this.commentService.deleteUserComment(adminId, commentId);
   }
 
-
-
-  @UseGuards(JwtAuthGuard)
   @Delete(':replyId')
+  @UseGuards(JwtAuthGuard)
   async deleteUserReply(
     @Param('replyId') replyId: number,
     @Req() req

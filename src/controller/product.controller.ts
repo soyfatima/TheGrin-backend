@@ -1,10 +1,10 @@
 import {
-    Body,
-    Param,
-    Controller, HttpException, HttpStatus, Post, Put, UploadedFile, UseGuards, UseInterceptors,
-    Delete,
-    Get,
-    Patch
+  Body,
+  Param,
+  Controller, HttpException, HttpStatus, Post, Put, UploadedFile, UseGuards, UseInterceptors,
+  Delete,
+  Get,
+  Patch
 } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ProductService } from "src/service/product.service";
@@ -19,69 +19,69 @@ import { CustomLogger } from "src/logger/logger.service";
 
 @Controller('products')
 export class ProductController {
-    constructor(private ProductService: ProductService,
+  constructor(private ProductService: ProductService,
     private readonly logger: CustomLogger,
 
-    ) { }
+  ) { }
 
-    @Post('create')
-    @UseGuards(JwtAuthGuard)
-    @UseInterceptors(FileInterceptor('uploadedFile', ProdFileOptions))
-    async createProduct(
-      @UploadedFile() file,
-      @Body() productData: Partial<Product>,
-    ) {
-      try {
-        if (productData.sizes) {
-          productData.sizes = JSON.parse(productData.sizes as any);
-        }
-  
-        const product = await this.ProductService.createProduct({
-          ...productData,
-          uploadedFile: file.filename,
-        });
-  
-        return product;
-      } catch (error) {
-        throw new HttpException(
-          'Failed to create product',
-          HttpStatus.INTERNAL_SERVER_ERROR
-        );
+  @Post('create')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('uploadedFile', ProdFileOptions))
+  async createProduct(
+    @UploadedFile() file,
+    @Body() productData: Partial<Product>,
+  ) {
+    try {
+      if (productData.sizes) {
+        productData.sizes = JSON.parse(productData.sizes as any);
       }
-    }
-  
 
-    //update Product
-    @Put(':id')
-    @UseGuards(JwtAuthGuard)
-    async updateFolder(
-        @Param('id') id: number,
-        @Body() updatedProductData: Partial<Product>,
-    ): Promise<Product> {
-        return await this.ProductService.updateProduct(id, updatedProductData);
-    }
+      const product = await this.ProductService.createProduct({
+        ...productData,
+        uploadedFile: file.filename,
+      });
 
-    //delete Product
-    @Delete(':id')
-    @UseGuards(JwtAuthGuard)
-    async deleteProduct(
-        @Param('id') id: number): Promise<void> {
-        await this.ProductService.deleteProduct(id);
+      return product;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to create product',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
+  }
 
-    //get productdetails by id
-    @Get('getproductdetails/:id')
-    async getProductDetailsById(@Param('id') id: number): Promise<Product> {
-        return await this.ProductService.getProductDetailsById(id);
-    }
 
-    //fetch folder
-    @Get('fetchproduct')
-    async getAllProduct(): Promise<Product[]> {
-        return await this.ProductService.getAllProducts();
-    }
+  //update Product
+  @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  async updateFolder(
+    @Param('id') id: number,
+    @Body() updatedProductData: Partial<Product>,
+  ): Promise<Product> {
+    return await this.ProductService.updateProduct(id, updatedProductData);
+  }
 
-    //update all products remise
+  //delete Product
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async deleteProduct(
+    @Param('id') id: number): Promise<void> {
+    await this.ProductService.deleteProduct(id);
+  }
+
+  //get productdetails by id
+  @Get('getproductdetails/:id')
+  async getProductDetailsById(@Param('id') id: number): Promise<Product> {
+    return await this.ProductService.getProductDetailsById(id);
+  }
+
+  //fetch folder
+  @Get('fetchproduct')
+  async getAllProduct(): Promise<Product[]> {
+    return await this.ProductService.getAllProducts();
+  }
+
+  //update all products remise
   @Patch('update/remise')
   @UseGuards(JwtAuthGuard)
   async updateRemiseForAllProducts(@Body('remise') remise: string): Promise<{ message: string }> {

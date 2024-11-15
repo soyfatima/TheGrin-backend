@@ -49,13 +49,9 @@ export class FolderController {
   ) {
     try {
       const userId = (req.user as { userId: number }).userId;
-
-      // Ensure content is present
       if (!folderData.content) {
         throw new Error('Content is required');
       }
-
-      // Add the file information to folderData
       const updatedFolderData = {
         ...folderData,
         uploadedFile: file ? file.filename : null, 
@@ -73,7 +69,6 @@ export class FolderController {
   }
   
   //fetch folder and folderdetails
-  //@UseGuards(JwtAuthGuard)
   @Get('user-folders/:id')
   async getUserFolders(
     @Param('id') id: number,
