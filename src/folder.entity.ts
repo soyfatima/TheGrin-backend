@@ -36,18 +36,11 @@ export class Folder {
   @JoinColumn()
   user: User;
 
-  @ManyToOne(() => Admin, (admin) => admin.folders, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn()
-  admin: Admin;
-
-  @Column({ default: false })
-  isAdmin: boolean;
-
   @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
   comments: Comment[];
 
-  @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.folder, { cascade: true, eager: true })
-  noteReadStatus: UserNoteReadStatus[];
+  // @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.folder, { cascade: true, eager: true })
+  // noteReadStatus: UserNoteReadStatus[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

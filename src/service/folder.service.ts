@@ -24,6 +24,7 @@ import {
 import { Admin } from 'src/admin.entity';
 import { UserNoteReadStatus } from 'src/noteread.entity';
 import { CustomLogger } from 'src/logger/logger.service';
+import { AdminNotes } from 'src/adminNote.entity';
 @Injectable()
 export class FolderService {
   constructor(
@@ -37,6 +38,8 @@ export class FolderService {
     private userNoteReadStatusRepository: Repository<UserNoteReadStatus>,
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
+    @InjectRepository(AdminNotes)
+    private noteRepository: Repository<AdminNotes>,
     private readonly logger: CustomLogger,
 
   ) { }
@@ -78,7 +81,7 @@ export class FolderService {
 
 
   //edit content
-  async updateFolderContent(userId: number, id: number, title:string, content: string): Promise<Folder> {
+  async updateFolderContent(userId: number, id: number, title: string, content: string): Promise<Folder> {
     // Fetch the folder including its associated user
     const folder = await this.folderRepository.findOne({
       where: { id: id },
@@ -125,116 +128,26 @@ export class FolderService {
   /////////////////////
   /////////admin note
 
-  async createAdminNote(folderData: Partial<Folder>, admin: Admin): Promise<Folder> {
-    const folder = this.folderRepository.create({
-      ...folderData,
-      isAdmin: true,
-      admin: admin,
-    });
-
-    const savedFolder = await this.folderRepository.save(folder);
-
-    const allUsers = await this.userRepository.find();
-
-    if (allUsers && allUsers.length > 0) {
-      const noteReadStatuses = allUsers.map(user => ({
-        folder: savedFolder,
-        user: user,
-        read: false,
-      }));
-
-      await this.userNoteReadStatusRepository.save(noteReadStatuses);
-    } else {
-      console.warn('Aucun utilisateur trouvé pour initialiser le statut de lecture');
-    }
-
-    return savedFolder;
-  }
-
-  async getAllAdminNote(): Promise<Folder[]> {
-    return await this.folderRepository.find({
-      where: { isAdmin: true },
-      relations: ['noteReadStatus', 'noteReadStatus.user'],
-    });
-  }
-
-  //update adminnote
-  async updateAdminNote(
-    id: number,
-    updatedFolderData: Partial<Folder>,
-  ): Promise<Folder> {
-    const folder = await this.folderRepository.findOne({
-      where: { id, isAdmin: true },
-    });
-
-    if (!folder) {
-      throw new NotFoundException('Admin folder not found');
-    }
-
-    Object.assign(folder, updatedFolderData);
-    return await this.folderRepository.save(folder);
-  }
-
-  //delete admin note
-  async deleteAdminNote(id: number): Promise<void> {
-    const result = await this.folderRepository.delete({
-      id,
-      isAdmin: true,
-    });
-
-    if (result.affected === 0) {
-      throw new NotFoundException('Admin folder not found');
-    }
-  }
-
-  async getAdminNoteDetailById(id: number): Promise<Folder> {
-    const folder = await this.folderRepository.findOne({
-      where: { id, isAdmin: true },
-    });
-
-    if (!folder) {
-      throw new NotFoundException('Admin folder not found');
-    }
-
-    return folder;
-  }
-
-  async markNoteAsRead(noteId: number, userId: number): Promise<void> {
-    const noteReadStatus = await this.userNoteReadStatusRepository.findOne({
-      where: {
-        folder: { id: noteId },
-        user: { id: userId },
-      },
-    });
-
-    if (noteReadStatus) {
-      noteReadStatus.read = true;
-      await this.userNoteReadStatusRepository.save(noteReadStatus);
-    } else {
-    //  console.warn('Aucun statut de lecture trouvé pour la noteId:', noteId, 'userId:', userId);
-      throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
-    }
-  }
-
+ 
   async deleteUserFolder(adminId: number, folderId: number): Promise<Folder> {
     const folder = await this.folderRepository.findOne({ where: { id: folderId }, relations: ['user'] });
     if (!folder) {
-        throw new NotFoundException('User folder not found or has already been deleted.');
+      throw new NotFoundException('User folder not found or has already been deleted.');
     }
 
-    const isAdmin = await this.checkIfAdmin(adminId); // Assume a method to check admin privileges
+    const isAdmin = await this.checkIfAdmin(adminId);
     if (!isAdmin) {
-        throw new ForbiddenException('Only admins can delete this folder.');
+      throw new ForbiddenException('Only admins can delete this folder.');
     }
 
     await this.folderRepository.delete(folderId);
 
-    return folder; 
-}
+    return folder;
+  }
 
-async checkIfAdmin(adminId: number): Promise<boolean> {
+  async checkIfAdmin(adminId: number): Promise<boolean> {
     const admin = await this.adminRepository.findOne({ where: { id: adminId } });
-    return !!admin; 
-}
+    return !!admin;
+  }
 
 }

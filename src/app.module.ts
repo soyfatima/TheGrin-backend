@@ -52,6 +52,9 @@ import { LoggerModule } from './logger/logger.module';
 import { Contact } from './contact.entity';
 import { BannedGuard } from './jwtGuard/banned.guard';
 import { APP_GUARD } from '@nestjs/core';
+import { AdminNotes } from './adminNote.entity';
+import { NoteController } from './controller/note.controller';
+import { NoteService } from './service/note.service';
 
 @Module({
   imports: [
@@ -64,7 +67,7 @@ import { APP_GUARD } from '@nestjs/core';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact, AdminNotes],
       synchronize: true,
     }),
     MulterModule.register(multerOptions),
@@ -72,7 +75,7 @@ import { APP_GUARD } from '@nestjs/core';
     MulterModule.register(adminFileOptions),
     MulterModule.register(ProdFileOptions),
     MessagingModule,
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact]),
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact, AdminNotes]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15m' },
@@ -106,7 +109,8 @@ import { APP_GUARD } from '@nestjs/core';
     NotificationController,
     UserController,
     MessagingController,
-    ReportController
+    ReportController,
+    NoteController,
   ],
   providers: [
     AppService,
@@ -122,6 +126,7 @@ import { APP_GUARD } from '@nestjs/core';
     MessagingService,
     MessagingGateway, 
     ReportService,
+    NoteService,
   
   ],
 

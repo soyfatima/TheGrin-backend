@@ -1,0 +1,165 @@
+import {
+    ConflictException,
+    ForbiddenException,
+    HttpException,
+    HttpStatus,
+    Inject,
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Folder } from 'src/folder.entity';
+import { createReadStream, createWriteStream } from 'fs';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'crypto';
+import * as fs from 'fs';
+import { User } from 'src/user.entity';
+import {
+    Comment
+
+} from 'src/comment.entity';
+import { Admin } from 'src/admin.entity';
+import { UserNoteReadStatus } from 'src/noteread.entity';
+import { CustomLogger } from 'src/logger/logger.service';
+import { AdminNotes } from 'src/adminNote.entity';
+@Injectable()
+export class NoteService {
+    constructor(
+        @InjectRepository(Folder)
+        private folderRepository: Repository<Folder>,
+        @InjectRepository(User)
+        private userRepository: Repository<User>,
+        @InjectRepository(Admin)
+        private adminRepository: Repository<Admin>,
+        @InjectRepository(UserNoteReadStatus)
+        private userNoteReadStatusRepository: Repository<UserNoteReadStatus>,
+        @InjectRepository(Comment)
+        private commentRepository: Repository<Comment>,
+        @InjectRepository(AdminNotes)
+        private noteRepository: Repository<AdminNotes>,
+        private readonly logger: CustomLogger,
+
+    ) { }
+
+
+    async createAdminNote(noteData: Partial<AdminNotes>): Promise<AdminNotes> {
+        console.log('Preparing to create note with data:', noteData);
+
+        const note = this.folderRepository.create({
+            ...noteData,
+            //  isAdmin: true,
+            //   admin: admin,
+        });
+
+        const savedNote = await this.noteRepository.save(note);
+        console.log('Note saved successfully:', savedNote);
+
+        const allUsers = await this.userRepository.find();
+
+        if (allUsers && allUsers.length > 0) {
+            const noteReadStatuses = allUsers.map(user => ({
+                folder: savedNote,
+                user: user,
+                read: false,
+            }));
+            console.log('Note read statuses saved successfully');
+            await this.userNoteReadStatusRepository.save(noteReadStatuses);
+        } else {
+            console.warn('Aucun utilisateur trouvé pour initialiser le statut de lecture');
+        }
+
+        return savedNote;
+    } 
+
+    async getAllAdminNote(): Promise<AdminNotes[]> {
+        return await this.noteRepository.find({
+            //  where: { isAdmin: true },
+            relations: ['noteReadStatus', 'noteReadStatus.user'],
+        });
+    }
+
+    //update adminnote
+    async updateAdminNote(
+        id: number,
+        updatedNoteData: Partial<AdminNotes>,
+    ): Promise<AdminNotes> {
+        const note = await this.noteRepository.findOne({
+            where: { id },
+        });
+
+        if (!note) {
+            throw new NotFoundException('Admin folder not found');
+        }
+
+        Object.assign(note, updatedNoteData);
+        return await this.noteRepository.save(note);
+    }
+
+    //delete admin note
+    async deleteAdminNote(id: number): Promise<void> {
+        const result = await this.noteRepository.delete({
+            id,
+            //  isAdmin: true,
+        });
+
+        if (result.affected === 0) {
+            throw new NotFoundException('Admin folder not found');
+        }
+    }
+
+    async getAdminNoteDetailById(id: number): Promise<AdminNotes> {
+        const note = await this.noteRepository.findOne({
+            where: { id },
+        });
+
+        if (!note) {
+            throw new NotFoundException('Admin folder not found');
+        }
+
+        return note;
+    }
+
+    // async markNoteAsRead(noteId: number, userId: number): Promise<void> {
+    //     const noteReadStatus = await this.userNoteReadStatusRepository.findOne({
+    //         where: {
+    //             note: { id: noteId },
+    //             user: { id: userId },
+    //         },
+    //     });
+
+    //     if (noteReadStatus) {
+    //         noteReadStatus.read = true;
+    //         await this.userNoteReadStatusRepository.save(noteReadStatus);
+    //     } else {
+    //         //  console.warn('Aucun statut de lecture trouvé pour la noteId:', noteId, 'userId:', userId);
+    //         throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
+    //     }
+    // }
+    async markNoteAsRead(noteId: number, userId: number): Promise<void> {
+        console.log('Received request to mark note as read:', { noteId, userId });
+    
+        const noteReadStatus = await this.userNoteReadStatusRepository.findOne({
+            where: {
+                note: { id: noteId },
+                user: { id: userId },
+            },
+        });
+    
+        console.log('Fetched note read status:', noteReadStatus);
+    
+        if (noteReadStatus) {
+            noteReadStatus.read = true;
+            console.log('Updating read status for note:', noteId, 'user:', userId, 'read status:', noteReadStatus.read);
+            
+            await this.userNoteReadStatusRepository.save(noteReadStatus);
+            console.log('Note read status updated successfully');
+        } else {
+            console.warn('No read status found for noteId:', noteId, 'userId:', userId);
+            throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
+        }
+    }
+    
+}

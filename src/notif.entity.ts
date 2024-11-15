@@ -3,6 +3,7 @@ import { Order } from './order.entity';
 import { Comment } from './comment.entity';
 import { User } from './user.entity';
 import { Folder } from './folder.entity';
+import { AdminNotes } from './adminNote.entity';
 
 @Entity()
 export class Notification {
@@ -26,6 +27,9 @@ export class Notification {
 
   @ManyToOne(() => Folder, { onDelete: 'CASCADE', nullable: true }) 
   folder: Folder;
+
+  @ManyToOne(() => AdminNotes, { onDelete: 'CASCADE', nullable: true }) 
+  note: AdminNotes;
 
   @ManyToOne(() => User, { nullable: true })
   user: User;

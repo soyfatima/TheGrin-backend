@@ -30,6 +30,7 @@ import { folderFileOptions } from 'src/fileOption';
 import { adminFileOptions } from 'src/adminFileOption';
 import { CustomLogger } from 'src/logger/logger.service';
 import { BannedGuard } from 'src/jwtGuard/banned.guard';
+import { AdminNotes } from 'src/adminNote.entity';
 
 @Controller('folders')
 export class FolderController {
@@ -123,99 +124,6 @@ export class FolderController {
   }
 
 
-  @Post('create/note')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('uploadedFile', adminFileOptions))
-  async createAdminNote(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() folderData: Partial<Folder>,
-    @Req() req: any, 
-  ) {
-    try {
-      const admin = req.user;  
-
-      const folder = await this.FolderService.createAdminNote(
-        {
-          ...folderData,
-          uploadedFile: file ? file.filename : null, 
-        },
-        admin, 
-      );
-      return folder;
-    } catch (error) {
-      this.logger.error('Erreur lors de la création du dossier:', error);
-      throw new HttpException(
-        'Impossible de créer le dossier',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  //get admin note
-  @Get('admin-notes')
-  async getAllAdminNotes(): Promise<Folder[]> {
-    return await this.FolderService.getAllAdminNote();
-  }
-
-  //update admin note
-  @Patch('update/note/:id')
-  @UseGuards(JwtAuthGuard)
-  async updateAdminNote(
-    @Param('id') id: number,
-    @Body() updatedFolderData: Partial<Folder>,
-  ): Promise<Folder> {
-    try {
-      const folder = await this.FolderService.updateAdminNote(id, updatedFolderData);
-      return folder;
-    } catch (error) {
-      throw new HttpException(
-        'Failed to update folder',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Delete('delete/note/:id')
-  @UseGuards(JwtAuthGuard)
-  async deleteAdminNote(
-    @Param('id') id: number,
-  ): Promise<void> {
-    try {
-      await this.FolderService.deleteAdminNote(id);
-    } catch (error) {
-      throw new HttpException(
-        'Failed to delete folder',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  //@UseGuards(JwtAuthGuard)
-  @Get('notedetails/:id')
-  async getAdminNoteDetailById(
-    @Param('id') id: number,
-  ): Promise<Folder> {
-    try {
-      const folder = await this.FolderService.getAdminNoteDetailById(id);
-      return folder;
-    } catch (error) {
-      throw new HttpException(
-        'Folder not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-  }
-
-  @Post('mark-note-as-read')
-  @UseGuards(JwtAuthGuard)
-  async markNoteAsRead(
-    @Body('noteId') noteId: number,
-    @Body('userId') userId: number,
-    @Req() req,
-  ): Promise<void> {
-    userId = (req.user as { userId: number }).userId
-    await this.FolderService.markNoteAsRead(noteId, userId);
-  }
   @Delete(':folderId')
   @UseGuards(JwtAuthGuard)
   async deleteUserFolder(
