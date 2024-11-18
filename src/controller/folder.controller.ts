@@ -69,7 +69,7 @@ export class FolderController {
     }
   }
   
-  //fetch folder and folderdetails
+  //fetch user folder and folderdetails
   @Get('user-folders/:id')
   async getUserFolders(
     @Param('id') id: number,
@@ -78,7 +78,7 @@ export class FolderController {
   }
 
 
-  //fetch folder and folderdetails
+  //fetch all folder and folderdetails
   @Get('folderdetails')
   async getAllFolders(): Promise<Folder[]> {
     return await this.FolderService.getAllFolders();

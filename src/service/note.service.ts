@@ -46,8 +46,6 @@ export class NoteService {
 
 
     async createAdminNote(noteData: Partial<AdminNotes>): Promise<AdminNotes> {
-        console.log('Preparing to create note with data:', noteData);
-
         const note = this.folderRepository.create({
             ...noteData,
             //  isAdmin: true,
@@ -55,8 +53,6 @@ export class NoteService {
         });
 
         const savedNote = await this.noteRepository.save(note);
-        console.log('Note saved successfully:', savedNote);
-
         const allUsers = await this.userRepository.find();
 
         if (allUsers && allUsers.length > 0) {
@@ -65,10 +61,9 @@ export class NoteService {
                 user: user,
                 read: false,
             }));
-            console.log('Note read statuses saved successfully');
             await this.userNoteReadStatusRepository.save(noteReadStatuses);
         } else {
-            console.warn('Aucun utilisateur trouvé pour initialiser le statut de lecture');
+            this.logger.warn('Aucun utilisateur trouvé pour initialiser le statut de lecture');
         }
 
         return savedNote;
@@ -121,23 +116,6 @@ export class NoteService {
 
         return note;
     }
-
-    // async markNoteAsRead(noteId: number, userId: number): Promise<void> {
-    //     const noteReadStatus = await this.userNoteReadStatusRepository.findOne({
-    //         where: {
-    //             note: { id: noteId },
-    //             user: { id: userId },
-    //         },
-    //     });
-
-    //     if (noteReadStatus) {
-    //         noteReadStatus.read = true;
-    //         await this.userNoteReadStatusRepository.save(noteReadStatus);
-    //     } else {
-    //         //  console.warn('Aucun statut de lecture trouvé pour la noteId:', noteId, 'userId:', userId);
-    //         throw new HttpException('Statut de lecture non trouvé', HttpStatus.NOT_FOUND);
-    //     }
-    // }
 
     async markNoteAsRead(noteId: number, userId: number): Promise<void> {
         let noteReadStatus = await this.userNoteReadStatusRepository.findOne({

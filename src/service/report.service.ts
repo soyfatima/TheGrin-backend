@@ -14,7 +14,7 @@ export class ReportService {
     constructor(
         @InjectRepository(Report)
         private readonly reportRepository: Repository<Report>,
-        @InjectRepository(User) // Inject the User repository
+        @InjectRepository(User)
         private readonly userRepository: Repository<User>,
         @InjectRepository(Comment)
         private readonly commentRepository: Repository<Comment>,
@@ -24,7 +24,6 @@ export class ReportService {
         private notificationService: NotificationService,
        private authService: AuthService
     ) { }
-
 
 
     async reportUser(UserId: number, reportedUserId: number, reportData: Partial<Report> , req: Request): Promise<Report> {
@@ -47,7 +46,6 @@ export class ReportService {
             throw new NotFoundException('Reporter not found');
         }
 
-        // Check if this user has already reported the same user
         const existingReport = await this.reportRepository.findOne({
             where: { user: { id: reportedUser.id }, reporter: { id: UserId } }
         });
@@ -69,28 +67,20 @@ export class ReportService {
         // Count the total number of reports for the reported user
         const reportCount = await this.reportRepository.count({ where: { user: { id: reportedUser.id } } });
 
-        // If the report count exceeds 2, block and ban the reported user
         if (reportCount > 2) {
             await this.userRepository.update(reportedUser.id, {
                 blocked: true,
                 status: 'banned'
             });
         
-
-            console.log(`User ${reportedUserId} has been banned`);
-
-            // Call the auth service to logout the banned user
-            const accessToken = req.headers['authorization']?.replace('Bearer ', ''); // Get the token from the request header
+            // logout the banned user
+            const accessToken = req.headers['authorization']?.replace('Bearer ', ''); 
     
             if (accessToken) {
-                console.log(`Logging out banned user ${reportedUserId}`);
-                await this.authService.logout(accessToken); // Pass the user's access token to logout
-                console.log(`User ${reportedUserId} has been logged out`);
+                await this.authService.logout(accessToken); 
             }
-    
 
             await this.reportRepository.delete({ user: { id: reportedUser.id } });
-            console.log(`Deleted all reports for banned user ${reportedUserId}`);
         }
 
         return report;
@@ -266,7 +256,7 @@ export class ReportService {
         //     }
         // }
 
-        if (reportCount >= 4) {
+        if (reportCount >= 2) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.folderRepository.delete(folderId);
             const folderName = folder.title; 

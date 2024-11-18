@@ -90,6 +90,7 @@ export class UserController {
   }
 
   @Get('admin/:id')
+  @UseGuards(JwtAuthGuard)
   async getAdminInfo(@Param('id') id: number) {
     const admin = await this.userService.getAdminInfo(id);
     if (!admin) {
@@ -120,7 +121,7 @@ export class UserController {
     return await this.userService.getAllUser()
   }
 
-  // Endpoint to request account deletion
+  // account deletion
   @Delete('request-deletion/:id')
   @UseGuards(JwtAuthGuard)
   async requestAccountDeletion(@Param('id') id: number, @Req() req) {
@@ -145,7 +146,6 @@ export class UserController {
   async cancelDeletion(@Body('id') userId: number): Promise<User> {
     return this.userService.cancelAccountDeletion(userId);
   }
-
 
   @Post('contact')
   async contactUs(

@@ -23,11 +23,11 @@ export class Comment {
   @Column('text')
   content: string;
 
-  @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn()
   user: User;
 
-  @ManyToOne(() => Admin, (admin) => admin.comments, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Admin, (admin) => admin.comments, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn()
   admin: Admin;
 

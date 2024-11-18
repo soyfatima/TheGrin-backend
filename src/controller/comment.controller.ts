@@ -24,6 +24,7 @@ import { Folder } from 'src/folder.entity';
 import { JwtAuthGuard } from 'src/jwtGuard/jwt-auth.guard';
 import { User } from 'src/user.entity';
 import { Report } from 'src/report.entity';
+import { Admin } from 'src/admin.entity';
 import { CustomLogger } from 'src/logger/logger.service';
 import { BannedGuard } from 'src/jwtGuard/banned.guard';
 export class CommentDto {
@@ -39,27 +40,28 @@ export class CommentController {
 
   // Add a comment
   @Post(':folderId')
-  @UseGuards(JwtAuthGuard)
-  async addComment(
-    @Param('folderId') folderId: number,
-    @Body() body: Partial<Comment>,
-    @Req() req: any,
-  ): Promise<Comment> {
-    try {
-      const userId = (req.user as { userId: number }).userId;
-      const role = req.user.role;
-      const comment = await this.commentService.addComment(
-        folderId,
-        userId,
-        body.content,
-        role
-      );
-      return comment;
-    } catch (error) {
-      this.logger.error('Error adding comment:', error.message);
-      throw new BadRequestException('Failed to add comment');
-    }
+@UseGuards(JwtAuthGuard, BannedGuard)
+async addComment(
+  @Param('folderId') folderId: number,
+  @Body() body: Partial<Comment>,
+  @Req() req: any,
+): Promise<Comment> {
+  try {
+    const userId = (req.user as { userId: number }).userId;
+    const role = req.user.role;
+
+    const comment = await this.commentService.addComment(
+      folderId,
+      userId,
+      body.content,
+      role
+    );
+    return comment;
+  } catch (error) {
+    this.logger.error('Error adding comment:', error.message);
+    throw new BadRequestException('Failed to add comment');
   }
+}
 
   //fetch comments
   @Get('/folder/:folderId')

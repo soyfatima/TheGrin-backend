@@ -39,6 +39,13 @@ export class Folder {
   @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
   comments: Comment[];
 
+  @ManyToOne(() => Admin, (admin) => admin.folders, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn()
+  admin: Admin;
+
+  @Column({ default: false })  
+  isAdmin: boolean;
+  
   // @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.folder, { cascade: true, eager: true })
   // noteReadStatus: UserNoteReadStatus[];
 

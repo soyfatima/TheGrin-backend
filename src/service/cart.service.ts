@@ -208,7 +208,7 @@ export class CartService {
       if (!isNaN(productPrice) && item.quantity) {
         totalPrice += productPrice * item.quantity;
       } else {
-        console.warn(`Invalid price or quantity for product: ${product.name}`);
+        this.logger.warn(`Invalid price or quantity for product: ${product.name}`);
       }
     });
 

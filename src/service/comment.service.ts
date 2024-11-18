@@ -81,48 +81,6 @@ export class CommentService {
     }
   }
 
-  // async addComment(folderId: number, userId: number, content: string): Promise<Comment> {
-  //   try {
-  //     const user = await this.userRepository.findOne({ where: { id: userId } });
-  //     const folder = await this.folderRepository.findOne({ 
-  //       where: { id: folderId },
-  //       relations: ['user'], 
-  //     });
-
-  //     if (!user || !folder) {
-  //       this.logger.error('User or Folder not found', { userId, folderId });
-  //       throw new Error('User or Folder not found');
-  //     }
-
-  //     // Create and save the comment
-  //     const comment = new Comment();
-  //     comment.content = content;
-  //     comment.user = user;
-  //     comment.folder = folder;
-
-  //     const savedComment = await this.commentRepository.save(comment);
-
-  //     // Notify the folder owner about the new comment
-  //     if (folder.user.id !== userId) {
-  //       const userName = user.username;
-  //       const folderName = folder.title;
-
-  //       // Notify only the owner of the folder
-  //       await this.notificationService.createNotifForComment(
-  //         folder.user.id, // Notify the owner of the folder
-  //         `Nouveau commentaire de ${userName} sur votre poste ${folderName}`,
-  //         savedComment.id
-  //       );
-  //     }
-
-  //     return savedComment;
-  //   } catch (error) {
-  //     this.logger.error('Error in addComment:', error);
-  //     throw error;
-  //   }
-  // }
-
-
 
   //fetch comments
   async getCommentsByFolderId(folderId: number): Promise<Comment[]> {
@@ -313,9 +271,6 @@ export class CommentService {
     await this.commentRepository.remove(reply);
   }
 
-
-
-  
   getUserComment(id: number): Promise<Comment[]> {
     return this.commentRepository.find({
       where: { user: { id: id } },

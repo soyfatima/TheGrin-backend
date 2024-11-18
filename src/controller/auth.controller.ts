@@ -65,8 +65,6 @@ export class AuthController {
       await this.authService.refreshAccessToken(refreshToken);
     return { accessToken: newAccessToken };
   }
-
-  //admin login
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
@@ -74,28 +72,30 @@ export class AuthController {
   ) {
     const { email, password } = loginDto;
     const user = await this.authService.validateAdmin(email, password);
+    
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    const accessToken = this.authService.generateAccessToken(user);
-    const refreshToken = this.authService.generateRefreshToken(user);
-
+  
+    const payload = { userId: user.userId, role: 'admin' }; // Set role to 'admin' for admin login
+    const accessToken = this.authService.generateAccessToken(payload); // Pass the payload with role explicitly set
+    const refreshToken = this.authService.generateRefreshToken(payload); // Use the same payload for refresh token
+  
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, // Set to true in production for HTTPS
       sameSite: 'strict',
     });
-
+  
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, // Set to true in production for HTTPS
       sameSite: 'strict',
     });
-
-    return { accessToken, refreshToken, userInfo: user, role: user.role };
+  
+    return { accessToken, refreshToken, userInfo: { ...user, role: 'admin' } }; // Ensure role is included in the response
   }
-
+  
   //user signup
   @Post('userSignup')
   async userSignup(
@@ -127,10 +127,10 @@ export class AuthController {
 
   // @Post('userLogin')
   // async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
-  //   const { username, password, consent } = userLoginDto;
+  //   const { username, password } = userLoginDto;
 
   //   try {
-  //     const { user, role } = await this.authService.userLogin(username, password, consent);
+  //     const { user, role } = await this.authService.userLogin(username, password);
   //     if (!user) {
   //       throw new UnauthorizedException('Invalid credentials');
   //     }
@@ -138,23 +138,12 @@ export class AuthController {
   //     const accessToken = this.authService.generateAccessToken(user);
   //     const refreshToken = this.authService.generateRefreshToken(user);
 
-  //     // Set tokens as cookies in the response only if the user has consented
-  //     if (consent) {
-  //       res.cookie('accessToken', accessToken, {
-  //         httpOnly: true,
-  //         secure: process.env.NODE_ENV === 'production',
-  //         sameSite: 'strict',
-  //         maxAge: 15 * 60 * 1000, // 15 minutes
-  //       });
-  //       res.cookie('refreshToken', refreshToken, {
-  //         httpOnly: true,
-  //         secure: process.env.NODE_ENV === 'production',
-  //         sameSite: 'strict',
-  //         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  //       });
-  //     }
-
-  //     res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
+   
+  //     res.status(HttpStatus.OK).send({
+  //       accessToken,
+  //       refreshToken,
+  //       userInfo: { ...user, role },
+  //     });
   //   } catch (error) {
   //     this.logger.error('Error during login:', error.message);
   //     res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
@@ -162,29 +151,38 @@ export class AuthController {
   // }
 
   @Post('userLogin')
-  async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
-    const { username, password } = userLoginDto;
+async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
+  const { username, password } = userLoginDto;
 
-    try {
-      const { user, role } = await this.authService.userLogin(username, password);
-      if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const accessToken = this.authService.generateAccessToken(user);
-      const refreshToken = this.authService.generateRefreshToken(user);
-
-      // Vous pouvez choisir d’envoyer les jetons en réponse JSON sans cookies
-      res.status(HttpStatus.OK).send({
-        accessToken,
-        refreshToken,
-        userInfo: { ...user, role },
-      });
-    } catch (error) {
-      this.logger.error('Error during login:', error.message);
-      res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
+  try {
+    const { user, role } = await this.authService.userLogin(username, password);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Generate access token with the correct user role
+    const accessToken = this.authService.generateAccessToken({
+      userId: user.id,
+      role: role, // Pass the correct role ('admin' or 'user')
+    });
+
+    // Generate refresh token (you may need to modify this similarly)
+    const refreshToken = this.authService.generateRefreshToken({
+      userId: user.id,
+      role: role, // Pass the correct role here as well
+    });
+
+    // Send the response with the tokens and user info
+    res.status(HttpStatus.OK).send({
+      accessToken,
+      refreshToken,
+      userInfo: { ...user, role },
+    });
+  } catch (error) {
+    this.logger.error('Error during login:', error.message);
+    res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
   }
+}
 
   @Post('reset-code')
   async requestResetCode(@Body('email') email: string): Promise<void> {

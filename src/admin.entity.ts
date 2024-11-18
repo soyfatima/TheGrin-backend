@@ -18,9 +18,8 @@ export class Admin {
   @Column()
   password: string;
 
-
-  // @OneToMany(() => Folder, (folder) => folder.admin, { onDelete: 'CASCADE' })
-  // folders: Folder[];
+  @OneToMany(() => Folder, (folder) => folder.admin, { onDelete: 'CASCADE' })
+  folders: Folder[];
 
   @OneToMany(() => Comment, (comment) => comment.admin)
   comments: Comment[];

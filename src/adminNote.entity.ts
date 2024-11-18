@@ -36,9 +36,6 @@ export class AdminNotes {
     @JoinColumn()
     admin: Admin;
 
-    // @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.note, { cascade: true, eager: true })
-    // noteReadStatus: UserNoteReadStatus[];
-
     @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.note, { cascade: true, eager: true })
     noteReadStatus: UserNoteReadStatus[];
 

@@ -71,6 +71,7 @@ import {
     
   //get admin note
   @Get('admin-notes')
+  @UseGuards(JwtAuthGuard)
   async getAllAdminNotes(): Promise<AdminNotes[]> {
     return await this.NoteService.getAllAdminNote();
   }
@@ -108,8 +109,8 @@ import {
     }
   }
 
-  //@UseGuards(JwtAuthGuard)
   @Get('notedetails/:id')
+  @UseGuards(JwtAuthGuard)
   async getAdminNoteDetailById(
     @Param('id') id: number,
   ): Promise<AdminNotes> {

@@ -24,19 +24,26 @@ export class BannedGuard implements CanActivate {
         }
 
         const token = authHeader.split(' ')[1];
-        this.logger.log(`Token extracted: ${token}`);
         let decoded;
         try {
             decoded = this.jwtService.verify(token);
-            this.logger.log(`Decoded token: ${decoded}`);
-
         } catch (error) {
             this.logger.error('JWT verification failed:', error);
             throw new ForbiddenException('Invalid token');
         }
 
+        if (decoded.role === 'admin') {
+            this.logger.log('Admin detected, skipping banned check');
+            return true;
+        }
+
+        // Fetch the user information if not admin
         const user = await this.userService.getUserInfo(decoded.userId);
-        this.logger.log(`Fetched user: ${user}`);
+
+        if (!user) {
+            this.logger.error('User not found');
+            throw new ForbiddenException('User not found');
+        }
 
         if (user.status === 'banned') {
             this.logger.log('User is banned, access denied');
@@ -46,5 +53,6 @@ export class BannedGuard implements CanActivate {
         this.logger.log('User is not banned, access granted');
         return true;
     }
+
 
 }

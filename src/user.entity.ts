@@ -1,4 +1,3 @@
-// Import necessary modules from TypeORM
 import {
   Entity,
   Column,
@@ -117,4 +116,6 @@ export class User {
   @Column({ type: 'int', default: 0 })
   warningCount: number;
   
+  @Column({ default: 'user' }) // Default role can be 'user'
+  role: string;
 }
