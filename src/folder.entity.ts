@@ -13,6 +13,7 @@ import { Comment } from './comment.entity';
 import { Admin } from './admin.entity';
 import { UserNoteReadStatus } from './noteread.entity';
 import { Report } from './report.entity';
+import { Notification } from './notif.entity';
 
 @Entity({ name: 'folders' })
 export class Folder {
@@ -31,10 +32,12 @@ export class Folder {
   @Column({ nullable: true })
   uploadedFile: string;
 
-
   @ManyToOne(() => User, (user) => user.folders, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: User;
+
+  @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
+  comments: Comment[];
 
   @ManyToOne(() => Admin, (admin) => admin.folders, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn()
@@ -43,12 +46,9 @@ export class Folder {
   @Column({ default: false })  
   isAdmin: boolean;
   
-  @OneToMany(() => Comment, (comment) => comment.folder, { cascade: true })
-  comments: Comment[];
-  
-  @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.folder, { cascade: true, eager: true })
-  noteReadStatus: UserNoteReadStatus[];
-  
+  // @OneToMany(() => UserNoteReadStatus, (noteReadStatus) => noteReadStatus.folder, { cascade: true, eager: true })
+  // noteReadStatus: UserNoteReadStatus[];
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
@@ -57,5 +57,10 @@ export class Folder {
 
   @OneToMany(() => Report, (report) => report.folder, { cascade: ['remove'], onDelete: 'CASCADE' })
   reports: Report[];
+  static title: any;
+
+  @OneToMany(() => Notification, (notification) => notification.folder, { cascade: true })
+  notifications: Notification[];
+
 
 }

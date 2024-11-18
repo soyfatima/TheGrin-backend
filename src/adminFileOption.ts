@@ -13,7 +13,12 @@ export const adminFileOptions = {
   }),
   fileFilter: (req, file, callback) => {
     // Optional: restrict file types
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const allowedTypes = [ 'image/jpeg', 
+      'image/png', 
+      'application/pdf',
+      'video/mp4', 
+      'video/webm', 
+      'video/ogg'];
     if (allowedTypes.includes(file.mimetype)) {
       callback(null, true);
     } else {

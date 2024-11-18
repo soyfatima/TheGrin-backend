@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import { Admin } from 'src/admin.entity';
 import {
     BadRequestException,
@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { User } from 'src/user.entity';
 import { throwError } from 'rxjs';
+import { CustomLogger } from 'src/logger/logger.service';
+import { Contact } from 'src/contact.entity';
 
 @Injectable()
 export class UserService {
@@ -18,6 +20,10 @@ export class UserService {
         private readonly adminRepository: Repository<Admin>,
         @InjectRepository(User)
         private userRepository: Repository<User>,
+        @InjectRepository(Contact)
+        private contactRepository: Repository<Contact>,
+        private readonly logger: CustomLogger,
+
     ) { }
 
     async updateUserInfo(userId: number, username?: string, uploadedFile?: string): Promise<User> {
@@ -81,8 +87,9 @@ export class UserService {
 
         if (blocked) {
             user.status = 'banned';
-        
+
         } else {
+            user.warningCount = 0;
             user.status = 'active';
         }
 
@@ -93,5 +100,56 @@ export class UserService {
         return await this.userRepository.find()
     }
 
+    async requestAccountDeletion(userId: number): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new Error('User not found');
+        }
 
+        // Mark the account for deletion 30 days from the current date
+        user.deletionRequestedAt = new Date();
+        user.status = 'left'
+        await this.userRepository.save(user);
+
+        return user;
+    }
+
+    // Scheduled job to delete accounts after 30 days
+    async deleteExpiredAccounts(): Promise<void> {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const usersToDelete = await this.userRepository.find({
+            where: {
+                deletionRequestedAt: LessThan(thirtyDaysAgo),
+            },
+        });
+
+        for (const user of usersToDelete) {
+            await this.userRepository.delete(user.id);
+        }
+    }
+
+    async cancelAccountDeletion(userId: number): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        // Clear the deletionRequestedAt date to cancel the deletion request
+        user.deletionRequestedAt = null;
+        user.status = 'active'
+        await this.userRepository.save(user);
+
+        return user;
+    }
+
+    async ContactUs(contactData: Partial<Contact>): Promise<Contact> {
+        const contact = this.contactRepository.create(contactData);
+        return await this.contactRepository.save(contact);
+    }
+
+    async getAllContactForm():Promise<Contact[]> {
+        return this.contactRepository.find()
+    }
 }

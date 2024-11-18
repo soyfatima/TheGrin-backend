@@ -17,15 +17,19 @@ import { Express } from 'express';
 import { OrderService } from "src/service/order.service";
 import { Order } from "src/order.entity";
 import { CartItem } from "src/cart-item.entity";
+import { CustomLogger } from "src/logger/logger.service";
 
 
 
 @Controller('orders')
 export class OrderController {
-  constructor(private OrderService: OrderService) { }
+  constructor(private OrderService: OrderService,
+    private readonly logger: CustomLogger,
 
-  @UseGuards(JwtAuthGuard)
+  ) { }
+
   @Post('global')
+  @UseGuards(JwtAuthGuard)
   async createOrder(@Request() req,
     @Body() orderData: Partial<Order>
   ): Promise<Order> {
@@ -34,8 +38,8 @@ export class OrderController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
   @Post('single')
+  @UseGuards(JwtAuthGuard)
   async orderSingle(@Request() req, @Body() orderData: Partial<Order>, @Query('itemId') itemId?: number) {
     const userId = (req.user as { userId: number }).userId;
     try {
@@ -46,20 +50,20 @@ export class OrderController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('fetchOrders')
+  @UseGuards(JwtAuthGuard)
   async fetchOrder() {
     try {
       const orders = await this.OrderService.getAllOrders();
       return orders;
     } catch (error) {
-     // console.error('Error fetching orders:', error);
+      this.logger.error('Error fetching orders:', error);
       return [];
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getOrderById(@Param('id') id: number): Promise<Order> {
     const order = await this.OrderService.findOrderById(id);
     if (!order) {
@@ -69,15 +73,15 @@ export class OrderController {
   }
 
   //delete Order
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async deleteOrder(
     @Param('id') id: number): Promise<void> {
     await this.OrderService.deleteOrder(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('')
+  @UseGuards(JwtAuthGuard)
   public async DeleteAllOrder(@Req() req: Request) {
     try {
       return await this.OrderService.DeleteAllOrder();
@@ -87,21 +91,21 @@ export class OrderController {
   }
 
 
-  @UseGuards(JwtAuthGuard)
   @Delete('')
+  @UseGuards(JwtAuthGuard)
   async deleteOrderNotification(
     @Param('id') id: number): Promise<void> {
     await this.OrderService.deleteOrderAndRelatedNotifications(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete('')
+  @UseGuards(JwtAuthGuard)
   public async deleteAllOrderNotifications(@Req() req: Request) {
     try {
       await this.OrderService.deleteAllOrderNotifications();
       return { message: 'All notifications and orders deleted successfully' };
     } catch (error) {
-    //  console.error('Error deleting all notifications and orders:', error);
+      this.logger.error('Error deleting all notifications and orders:', error);
       throw new Error('Failed to delete notifications and orders');
     }
   }

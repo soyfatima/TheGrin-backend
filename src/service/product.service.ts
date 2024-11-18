@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from 'src/product.entity';
 import { CartItem } from 'src/cart-item.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class ProductService {
@@ -16,6 +17,8 @@ export class ProductService {
         private productRepository: Repository<Product>,
         @InjectRepository(CartItem)
     private cartItemRepository: Repository<CartItem>,
+    private readonly logger: CustomLogger,
+
     ) { }
 
     async createProduct(productData: Partial<Product>): Promise<Product> {
@@ -46,7 +49,7 @@ export class ProductService {
           // Delete the product
           await this.productRepository.delete(id);
         } catch (error) {
-         // console.error('Error deleting product:', error);
+         this.logger.error('Error deleting product:', error);
           throw new Error('Failed to delete product.');
         }
       }
@@ -60,6 +63,17 @@ export class ProductService {
     //get ProductsdetailsbyId
     async getProductDetailsById(id: number): Promise<Product> {
         return await this.productRepository.findOne({ where: { id } });
+    }
+
+     //update all products remise
+     async updateRemiseForAllProducts(remise: string): Promise<void> {
+        const products = await this.productRepository.find();
+
+        if (!products || products.length === 0) {
+            throw new NotFoundException('No products found');
+        }
+
+        await this.productRepository.update({}, { remise });
     }
 
       

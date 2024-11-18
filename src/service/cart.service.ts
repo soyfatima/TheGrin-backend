@@ -5,6 +5,7 @@ import { Cart } from 'src/cart.entity';
 import { CartItem } from 'src/cart-item.entity';
 import { Product } from 'src/product.entity';
 import { User } from 'src/user.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 @Injectable()
 export class CartService {
@@ -16,7 +17,9 @@ export class CartService {
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
     @InjectRepository(User)
-    private userRepository: Repository<User>
+    private userRepository: Repository<User>,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   async createCartForUser(userId: number): Promise<Cart> {
@@ -38,7 +41,7 @@ export class CartService {
 
       return savedCart;
     } catch (error) {
-    //  console.error('Erreur lors de la création du panier pour l\'utilisateur:', error.message);
+      this.logger.error('Erreur lors de la création du panier pour l\'utilisateur:', error.message);
       throw new InternalServerErrorException('Échec de la création du panier pour l\'utilisateur');
     }
   }
@@ -72,10 +75,14 @@ export class CartService {
   //add item to cart if quantity was select by user
   async addToCartWithQuantity(userId: number, productId: number, quantity: number): Promise<CartItem> {
     try {
-      let cart = await this.cartRepository.findOne({ where: { id: userId }, relations: ['items'] });
+
+      // Find the cart by the user ID
+      const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['cart'] });
+      let cart = user?.cart;
+
       if (!cart) {
         cart = new Cart();
-        cart.id = userId;
+        cart.user = user; 
         cart.items = [];
         await this.cartRepository.save(cart);
       }
@@ -85,30 +92,31 @@ export class CartService {
         throw new Error('Product not found');
       }
 
+      // Check if the product is already in the cart
       let cartItem = await this.cartItemRepository.findOne({
-        where: { cart, product },
+        where: { cart: { id: cart.id }, product: { id: productId } },
       });
 
       if (cartItem) {
-        cartItem.quantity += quantity;
+        throw new Error('Product already exists in cart');
       } else {
         cartItem = new CartItem();
         cartItem.cart = cart;
         cartItem.product = product;
         cartItem.quantity = quantity;
+        cartItem = await this.cartItemRepository.save(cartItem);
       }
-
-      cartItem = await this.cartItemRepository.save(cartItem);
 
       return cartItem;
     } catch (error) {
-      if (error.code === '23505') { // PostgreSQL unique violation error code
+      if (error.code === '23505') { 
         throw new Error('Item already in cart');
       }
-    //  console.error('Error adding product to cart:', error.message);
+       this.logger.error('Error adding product to cart:');
       throw error;
     }
   }
+
 
   //add item to cart
   async addToCart1(userId: number, productId: number): Promise<CartItem> {
@@ -142,10 +150,10 @@ export class CartService {
       return savedCartItem;
     } catch (error) {
       if (error.code === '23505') { 
-      //  console.error('Error adding product to cart: Item already in cart');
+        this.logger.error('Error adding product to cart: Item already in cart');
         throw new Error('Item already in cart');
       }
-     // console.error('Error adding product to cart:', error.message);
+      this.logger.error('Error adding product to cart:', error.message);
       throw error;
     }
   }
@@ -200,7 +208,7 @@ export class CartService {
       if (!isNaN(productPrice) && item.quantity) {
         totalPrice += productPrice * item.quantity;
       } else {
-        console.warn(`Invalid price or quantity for product: ${product.name}`);
+        this.logger.warn(`Invalid price or quantity for product: ${product.name}`);
       }
     });
 
@@ -291,7 +299,7 @@ export class CartService {
       const updatedCart = await this.cartRepository.save(cart);
       return updatedCart;
     } catch (error) {
-     // console.error('Error removing product from cart:', error.message);
+      this.logger.error('Error removing product from cart:', error.message);
       throw error;
     }
   }

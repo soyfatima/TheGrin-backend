@@ -7,6 +7,7 @@ import { Comment } from 'src/comment.entity';
 import { Folder } from 'src/folder.entity';
 import { User } from 'src/user.entity';
 import { Message } from 'src/message.entity';
+import { CustomLogger } from 'src/logger/logger.service';
 
 
 @Injectable()
@@ -21,7 +22,9 @@ export class NotificationService {
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(Folder)
-    private readonly folderRepository: Repository<Folder>
+    private readonly folderRepository: Repository<Folder>,
+    private readonly logger: CustomLogger,
+
   ) { }
 
   async createNotifForComment(userId: number, message: string, commentId: number): Promise<Notification> {
@@ -43,7 +46,7 @@ export class NotificationService {
 
     return this.notificationRepository.save(notification);
   }
-
+ 
   async createNotifForReply(message: string, commentId: number): Promise<Notification> {
     const comment = await this.commentRepository.findOne({ where: { id: commentId }, relations: ['user', 'folder'] });
     if (!comment) {
@@ -112,9 +115,24 @@ export class NotificationService {
       relations: ['order'],
       order: { createdAt: 'DESC' },
     });
-  
+
     return notifications;
   }
+
+  async createNotifForWarning(userId: number, message: string): Promise<Notification> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    
+    if (!user) {
+      throw new Error('User not found'); 
+    }
+  
+    const notification = new Notification();
+    notification.message = message;
+    notification.user = user; 
+  
+    return this.notificationRepository.save(notification);
+  }
+  
 
   async getAllUserNotifications(userId: number): Promise<Notification[]> {
     try {
@@ -122,14 +140,14 @@ export class NotificationService {
         where: { user: { id: userId } },
         relations: ['comment', 'comment.user', 'comment.folder', 'user'],
       });
-  
+
       return userNotifications;
     } catch (error) {
-    //  console.error('Failed to fetch notifications:', error);
+      this.logger.error('Failed to fetch notifications:', error);
       throw new Error('Unable to fetch notifications');
     }
   }
-  
+
 
   // notification.service.ts (or equivalent service)
   async getUserNotificationById(notificationId: number): Promise<Notification> {
@@ -164,7 +182,7 @@ export class NotificationService {
     try {
       await this.notificationRepository.delete({ user: { id: userId } });
     } catch (error) {
-   //   console.error('Error deleting all notifications:', error);
+      this.logger.error('Error deleting all notifications:', error);
       throw new Error('Failed to delete all notifications');
     }
   }
