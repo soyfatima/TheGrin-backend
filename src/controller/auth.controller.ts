@@ -56,8 +56,8 @@ export class AuthController {
   ) { }
 
   //refresh token
-  @UseGuards(JwtAuthGuard)
   @Post('refresh-token')
+  @UseGuards(JwtAuthGuard)
   async refreshAccessToken(
     @Body() { refreshToken }: { refreshToken: string },
   ): Promise<{ accessToken: string }> {
@@ -65,8 +65,6 @@ export class AuthController {
       await this.authService.refreshAccessToken(refreshToken);
     return { accessToken: newAccessToken };
   }
-
-  //admin login
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
@@ -74,28 +72,30 @@ export class AuthController {
   ) {
     const { email, password } = loginDto;
     const user = await this.authService.validateAdmin(email, password);
+    
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    const accessToken = this.authService.generateAccessToken(user);
-    const refreshToken = this.authService.generateRefreshToken(user);
-
+  
+    const payload = { userId: user.userId, role: 'admin' }; // Set role to 'admin' for admin login
+    const accessToken = this.authService.generateAccessToken(payload); // Pass the payload with role explicitly set
+    const refreshToken = this.authService.generateRefreshToken(payload); // Use the same payload for refresh token
+  
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, // Set to true in production for HTTPS
       sameSite: 'strict',
     });
-
+  
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: false, // Set to true in production for HTTPS
       sameSite: 'strict',
     });
-
-    return { accessToken, refreshToken, userInfo: user, role: user.role };
+  
+    return { accessToken, refreshToken, userInfo: { ...user, role: 'admin' } }; // Ensure role is included in the response
   }
-
+  
   //user signup
   @Post('userSignup')
   async userSignup(
@@ -125,37 +125,64 @@ export class AuthController {
     }
   }
 
+  // @Post('userLogin')
+  // async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
+  //   const { username, password } = userLoginDto;
+
+  //   try {
+  //     const { user, role } = await this.authService.userLogin(username, password);
+  //     if (!user) {
+  //       throw new UnauthorizedException('Invalid credentials');
+  //     }
+
+  //     const accessToken = this.authService.generateAccessToken(user);
+  //     const refreshToken = this.authService.generateRefreshToken(user);
+
+   
+  //     res.status(HttpStatus.OK).send({
+  //       accessToken,
+  //       refreshToken,
+  //       userInfo: { ...user, role },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error('Error during login:', error.message);
+  //     res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
+  //   }
+  // }
+
   @Post('userLogin')
-  async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
-    const { username, password } = userLoginDto;
+async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
+  const { username, password } = userLoginDto;
 
-    try {
-      const { user, role } = await this.authService.userLogin(username, password);
-      if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-
-      const accessToken = this.authService.generateAccessToken(user);
-      const refreshToken = this.authService.generateRefreshToken(user);
-
-      // Set tokens as cookies in the response
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'strict',
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'strict',
-      });
-
-      res.status(HttpStatus.OK).send({ accessToken, refreshToken, userInfo: { ...user, role } });
-    } catch (error) {
-        this.logger.error('Error during login:', error.message);
-      res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
+  try {
+    const { user, role } = await this.authService.userLogin(username, password);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Generate access token with the correct user role
+    const accessToken = this.authService.generateAccessToken({
+      userId: user.id,
+      role: role, // Pass the correct role ('admin' or 'user')
+    });
+
+    // Generate refresh token (you may need to modify this similarly)
+    const refreshToken = this.authService.generateRefreshToken({
+      userId: user.id,
+      role: role, // Pass the correct role here as well
+    });
+
+    // Send the response with the tokens and user info
+    res.status(HttpStatus.OK).send({
+      accessToken,
+      refreshToken,
+      userInfo: { ...user, role },
+    });
+  } catch (error) {
+    this.logger.error('Error during login:', error.message);
+    res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
   }
+}
 
   @Post('reset-code')
   async requestResetCode(@Body('email') email: string): Promise<void> {
@@ -182,13 +209,14 @@ export class AuthController {
     @Res() res: Response,
   ): Promise<void> {
     try {
-      await this.authService.logout(accessToken); 
+      await this.authService.logout(accessToken);
       res.clearCookie('accessToken');
-      res.status(200).send();
+      res.status(200).send({ message: 'Logged out successfully' });
     } catch (error) {
       this.logger.error('Error during logout:', error);
       res.status(400).send({ message: error.message });
     }
   }
+
 
 }

@@ -18,6 +18,8 @@ import {
   ParseIntPipe,
   HttpStatus,
   Patch,
+  HttpException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../jwtGuard/jwt-auth.guard';
@@ -28,6 +30,8 @@ import * as path from 'path';
 import { UserService } from 'src/service/user.service';
 import { User } from 'src/user.entity';
 import { CustomLogger } from 'src/logger/logger.service';
+import { Contact } from 'src/contact.entity';
+import { BannedGuard } from 'src/jwtGuard/banned.guard';
 
 
 @Controller('users')
@@ -37,8 +41,8 @@ export class UserController {
 
   ) { }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':id/update')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('uploadedFile', multerOptions))
   async updateUserInfo(
     @UploadedFile() file: Express.Multer.File,
@@ -62,8 +66,8 @@ export class UserController {
   }
 
   //delete picture
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/deletePicture')
+  @UseGuards(JwtAuthGuard)
   async deleteProfilPic(
     @Req() req,
     @Param('id', ParseIntPipe) userId: number
@@ -75,8 +79,8 @@ export class UserController {
     return await this.userService.deleteProfilPic(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('user/:id')
+  @UseGuards(JwtAuthGuard, BannedGuard)
   async getUserInfo(@Param('id') id: number) {
     const user = await this.userService.getUserInfo(id);
     if (!user) {
@@ -86,17 +90,17 @@ export class UserController {
   }
 
   @Get('admin/:id')
+  @UseGuards(JwtAuthGuard)
   async getAdminInfo(@Param('id') id: number) {
     const admin = await this.userService.getAdminInfo(id);
     if (!admin) {
       throw new NotFoundException('Admin not found');
     }
-    return admin; // Return the admin data here
+    return admin;
   }
 
-  @UseGuards(JwtAuthGuard)
-  // @Patch('blockUser')
   @Patch('blockUser/:id')
+  @UseGuards(JwtAuthGuard)
   async blockUser(
     @Param('id') id: number,
     @Body() body: { blocked: boolean },
@@ -111,10 +115,47 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('GetAllUser')
+  @UseGuards(JwtAuthGuard)
   async getAllUser(): Promise<User[]> {
     return await this.userService.getAllUser()
   }
 
+  // account deletion
+  @Delete('request-deletion/:id')
+  @UseGuards(JwtAuthGuard)
+  async requestAccountDeletion(@Param('id') id: number, @Req() req) {
+    try {
+      const id = (req.user as { userId: number }).userId;
+      const user = await this.userService.requestAccountDeletion(id);
+      return { message: 'Account deletion requested. Your account will be permanently deleted after 30 days.', user };
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
+  }
+
+  // Private endpoint to delete expired accounts (optional)
+  @Delete('delete-expired')
+  @UseGuards(JwtAuthGuard)
+  async deleteExpiredAccounts() {
+    await this.userService.deleteExpiredAccounts();
+    return { message: 'Expired accounts deleted successfully.' };
+  }
+
+  @Post('cancel-deletion')
+  async cancelDeletion(@Body('id') userId: number): Promise<User> {
+    return this.userService.cancelAccountDeletion(userId);
+  }
+
+  @Post('contact')
+  async contactUs(
+    @Body()contactData:Partial<Contact> 
+  ) {
+    return await this.userService.ContactUs(contactData)
+  }
+
+  @Get('getAllUserContactForm')
+  async getAllContactForm(): Promise<Contact[]> {
+    return await this.userService.getAllContactForm();
+  }
 }

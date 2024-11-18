@@ -38,35 +38,8 @@ async function bootstrap() {
   app.use('/blog-backend/adminFile', express.static('adminFile'));
   app.use('/blog-backend/productFile', express.static('productFile'));
 
-  app.useLogger(new Logger());
-
-  const allowedOrigins = [
-    // 'https://thltechnologies.com', 'https://thlweb-admin.vercel.app', 'https://thltechserveur.com'
-  ];
-
-  // Custom CORS middleware to handle multiple origins
-  app.use((req, res, next) => {
-    const origin = req.headers.origin as string;
-    if (allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    next();
-  });
-
-  // Serve the Angular application's index.html file for all other routes
-  app.use('*', express.static(join(__dirname, '..', 'public')));
-  // Serve the Angular application's index.html file for all other routes
-  app.use('*', (req, res, next) => {
-    express.static(join(__dirname, '..', 'public'))(req, res, next);
-  });
-
-  await app.listen(4000, '0.0.0.0');
+  
+  await app.listen(3000);
 }
 
 bootstrap();

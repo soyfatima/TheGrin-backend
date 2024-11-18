@@ -1,4 +1,3 @@
-// Import necessary modules from TypeORM
 import {
   Entity,
   Column,
@@ -79,17 +78,17 @@ export class User {
 
   @OneToMany(() => CartItem, cartItem => cartItem.user)
   cartItems: CartItem[];
-
+  
   @OneToMany(() => UserNoteReadStatus, userNoteReadStatus => userNoteReadStatus.user)
   noteReadStatus: UserNoteReadStatus[];
 
   @Column({ type: 'boolean', default: false })
   blocked: boolean;
 
-  @Column({ type: 'enum', enum: ['active', 'restricted', 'banned'], default: 'active' })
+  @Column({ type: 'enum', enum: ['active', 'restricted', 'banned','left'], default: 'active' })
   status: string;
 
-  @Column({ default: 10000000 }) // Limit number of messages per day
+  @Column({ default: 10000000 })
   message_limit: number;
 
   @OneToMany(() => Message, (message) => message.sender)
@@ -110,4 +109,13 @@ export class User {
   // Reports received by the user
   @OneToMany(() => Report, (report) => report.user)
   reportsReceived: Report[];
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletionRequestedAt: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  warningCount: number;
+  
+  @Column({ default: 'user' }) // Default role can be 'user'
+  role: string;
 }

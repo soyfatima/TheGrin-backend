@@ -49,10 +49,17 @@ import { Report } from './report.entity';
 import { ReportService } from './service/report.service';
 import { ReportController } from './controller/report.controller';
 import { LoggerModule } from './logger/logger.module'; 
+import { Contact } from './contact.entity';
+import { BannedGuard } from './jwtGuard/banned.guard';
+import { APP_GUARD } from '@nestjs/core';
+import { AdminNotes } from './adminNote.entity';
+import { NoteController } from './controller/note.controller';
+import { NoteService } from './service/note.service';
 
 @Module({
   imports: [
     LoggerModule,
+    //JwtModule.register({}),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -60,7 +67,7 @@ import { LoggerModule } from './logger/logger.module';
       username: 'postgres',
       password: 'password',
       database: 'myforum',
-      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report],
+      entities: [Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact, AdminNotes],
       synchronize: true,
     }),
     MulterModule.register(multerOptions),
@@ -68,7 +75,7 @@ import { LoggerModule } from './logger/logger.module';
     MulterModule.register(adminFileOptions),
     MulterModule.register(ProdFileOptions),
     MessagingModule,
-    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report]),
+    TypeOrmModule.forFeature([Admin, Folder, User, Comment, Product, Cart, CartItem, Order, Notification, UserNoteReadStatus, Message, Report,Contact, AdminNotes]),
     JwtModule.register({
       secret: jwtConfig.secret,
       signOptions: { expiresIn: '15m' },
@@ -89,7 +96,6 @@ import { LoggerModule } from './logger/logger.module';
       },
 
     }),
-    // other modules
 
   ],
   controllers: [
@@ -103,7 +109,8 @@ import { LoggerModule } from './logger/logger.module';
     NotificationController,
     UserController,
     MessagingController,
-    ReportController
+    ReportController,
+    NoteController,
   ],
   providers: [
     AppService,
@@ -118,7 +125,10 @@ import { LoggerModule } from './logger/logger.module';
     UserService,
     MessagingService,
     MessagingGateway, 
-    ReportService
+    ReportService,
+    NoteService,
+  
   ],
+
 })
 export class AppModule { }

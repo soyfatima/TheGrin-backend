@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "src/jwtGuard/jwt-auth.guard";
 import { ReportService } from "src/service/report.service";
 import { Report } from 'src/report.entity';
@@ -13,21 +13,19 @@ export class ReportController {
 
     ) { }
 
-
-
-    @UseGuards(JwtAuthGuard)
     @Post('report/user/:userId')
+    @UseGuards(JwtAuthGuard)
     async reportUser(
         @Param('userId') reportedUserId: number,
         @Req() req,
         @Body() reportData: Partial<Report>
     ): Promise<Report> {
         const reporterUserId = (req.user as { userId: number }).userId;
-        return this.reportService.reportUser(reporterUserId, reportedUserId, reportData)
+        return this.reportService.reportUser(reporterUserId, reportedUserId, reportData, req)
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post('report/comment/:commentId')
+    @UseGuards(JwtAuthGuard)
     async reportComment(
         @Param('commentId') commentId: number,
         @Req() req,
@@ -37,8 +35,8 @@ export class ReportController {
         return this.reportService.createReportByComment(commentId, reporterUserId, reportData);
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post('report/reply/:replyId')
+    @UseGuards(JwtAuthGuard)
     async createReportByReply(
         @Param('replyId') replyId: number,
         @Req() req,
@@ -48,9 +46,8 @@ export class ReportController {
         return this.reportService.createReportByReply(replyId, reporterUserId, reportData)
     }
 
-
-    @UseGuards(JwtAuthGuard)
     @Post('report/folder/:folderId')
+    @UseGuards(JwtAuthGuard)
     async createReportByFolder(
         @Param('folderId') folderId: number,
         @Req() req,
@@ -60,4 +57,14 @@ export class ReportController {
         return this.reportService.createReportByFolder(folderId, reporterUserId, reportData);
     }
 
+  @Patch(':userId/warnings')
+  @UseGuards(JwtAuthGuard)
+  async incrementUserWarnings(@Param('userId') userId: number): Promise<void> {
+    try {
+      await this.reportService.incrementUserWarningCount(userId);
+    } catch (error) {
+      this.logger.error(`Error incrementing warning count for user ID: ${userId}`, error);
+      throw error;
+    }
+  }
 }

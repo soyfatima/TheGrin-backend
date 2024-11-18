@@ -65,5 +65,16 @@ export class ProductService {
         return await this.productRepository.findOne({ where: { id } });
     }
 
+     //update all products remise
+     async updateRemiseForAllProducts(remise: string): Promise<void> {
+        const products = await this.productRepository.find();
+
+        if (!products || products.length === 0) {
+            throw new NotFoundException('No products found');
+        }
+
+        await this.productRepository.update({}, { remise });
+    }
+
       
 }
