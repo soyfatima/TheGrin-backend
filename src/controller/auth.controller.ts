@@ -65,6 +65,7 @@ export class AuthController {
       await this.authService.refreshAccessToken(refreshToken);
     return { accessToken: newAccessToken };
   }
+  
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
@@ -77,10 +78,10 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials');
     }
   
-    const payload = { userId: user.userId, role: 'admin' }; // Set role to 'admin' for admin login
-    const accessToken = this.authService.generateAccessToken(payload); // Pass the payload with role explicitly set
-    const refreshToken = this.authService.generateRefreshToken(payload); // Use the same payload for refresh token
-  
+    const payload = { userId: user.userId, role: 'admin' };
+    const accessToken = this.authService.generateAccessToken(payload);
+    const refreshToken = this.authService.generateRefreshToken(payload);
+
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: false, // Set to true in production for HTTPS
@@ -93,7 +94,7 @@ export class AuthController {
       sameSite: 'strict',
     });
   
-    return { accessToken, refreshToken, userInfo: { ...user, role: 'admin' } }; // Ensure role is included in the response
+    return { accessToken, refreshToken, userInfo: { ...user, role: 'admin' } }; 
   }
   
   //user signup
@@ -125,31 +126,6 @@ export class AuthController {
     }
   }
 
-  // @Post('userLogin')
-  // async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
-  //   const { username, password } = userLoginDto;
-
-  //   try {
-  //     const { user, role } = await this.authService.userLogin(username, password);
-  //     if (!user) {
-  //       throw new UnauthorizedException('Invalid credentials');
-  //     }
-
-  //     const accessToken = this.authService.generateAccessToken(user);
-  //     const refreshToken = this.authService.generateRefreshToken(user);
-
-   
-  //     res.status(HttpStatus.OK).send({
-  //       accessToken,
-  //       refreshToken,
-  //       userInfo: { ...user, role },
-  //     });
-  //   } catch (error) {
-  //     this.logger.error('Error during login:', error.message);
-  //     res.status(HttpStatus.UNAUTHORIZED).send({ message: error.message });
-  //   }
-  // }
-
   @Post('userLogin')
 async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promise<void> {
   const { username, password } = userLoginDto;
@@ -160,19 +136,16 @@ async userLogin(@Body() userLoginDto: UserLoginDto, @Res() res: Response): Promi
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate access token with the correct user role
     const accessToken = this.authService.generateAccessToken({
       userId: user.id,
-      role: role, // Pass the correct role ('admin' or 'user')
+      role: role,
     });
 
-    // Generate refresh token (you may need to modify this similarly)
     const refreshToken = this.authService.generateRefreshToken({
       userId: user.id,
-      role: role, // Pass the correct role here as well
+      role: role, 
     });
 
-    // Send the response with the tokens and user info
     res.status(HttpStatus.OK).send({
       accessToken,
       refreshToken,

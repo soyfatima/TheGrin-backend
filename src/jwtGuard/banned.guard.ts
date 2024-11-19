@@ -33,7 +33,7 @@ export class BannedGuard implements CanActivate {
         }
 
         if (decoded.role === 'admin') {
-            this.logger.log('Admin detected, skipping banned check');
+           // this.logger.log('Admin detected, skipping banned check');
             return true;
         }
 
@@ -46,11 +46,11 @@ export class BannedGuard implements CanActivate {
         }
 
         if (user.status === 'banned') {
-            this.logger.log('User is banned, access denied');
+          //  this.logger.log('User is banned, access denied');
             throw new ForbiddenException('User is banned');
         }
 
-        this.logger.log('User is not banned, access granted');
+       // this.logger.log('User is not banned, access granted');
         return true;
     }
 

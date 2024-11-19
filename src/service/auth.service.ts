@@ -43,31 +43,15 @@ export class AuthService {
     return jwtConfig.secret;
   }
 
-  // generateAccessToken(user: User | Admin): string {
-  //   //const payload = { userId: user.id, };
-  //   const payload = { userId: user.id, role: user instanceof Admin ? 'admin' : 'user' }; 
-  //   const options = { expiresIn: '15m' };
-  //   const token = this.jwtService.sign(payload, options);
-  //   return token;
-  // }
-
-  // generateRefreshToken(user: User | Admin): string {
-  //   const payload = { userId: user.id, role:user instanceof Admin ? 'admin' : 'user' };
-  //   const options = { expiresIn: '1d' };
-  //   const token = this.jwtService.sign(payload, options);
-  //   return token;
-  // }
   generateAccessToken(payload: { userId: number, role: string }): string {
-    console.log('Generating Access Token with Payload:', payload); // Log payload for debugging
     const options = { expiresIn: '15m' };
-    const token = this.jwtService.sign(payload, options); // Ensure payload has both userId and role
+    const token = this.jwtService.sign(payload, options); 
     return token;
   }
   
   generateRefreshToken(payload: { userId: number, role: string }): string {
-    console.log('Generating Refresh Token with Payload:', payload); // Log payload for debugging
     const options = { expiresIn: '1d' };
-    const token = this.jwtService.sign(payload, options); // Ensure payload has both userId and role
+    const token = this.jwtService.sign(payload, options); 
     return token;
   }
   
@@ -84,10 +68,9 @@ export class AuthService {
         throw new UnauthorizedException('User not found');
       }
   
-      // Ensure correct role assignment when refreshing the token
       const newAccessToken = this.generateAccessToken({
         userId: user.id,
-        role: user instanceof Admin ? 'admin' : 'user', // Ensure correct role assignment
+        role: user instanceof Admin ? 'admin' : 'user',
       });
   
       return newAccessToken;
@@ -103,7 +86,7 @@ export class AuthService {
       email === this.predefinedEmail &&
       password === this.predefinedPassword
     ) {
-      return { email: this.predefinedEmail, role: 'admin' };
+      return {userId:1, email: this.predefinedEmail, role: 'admin' };
     }
     return null;
   }
@@ -130,12 +113,10 @@ export class AuthService {
           'Email address cannot be used as username',
         );
       }
-      // Check if the username is "admin"
       if (username.toLowerCase() === 'admin') {
         throw new BadRequestException('The username "admin" is reserved and cannot be used');
       }
 
-      // Vérifie si le nom d'utilisateur est déjà utilisé
       const existingUser = await this.userRepository.findOne({
         where: { username },
       });
@@ -143,7 +124,6 @@ export class AuthService {
         throw new BadRequestException('Username already exists');
       }
 
-      // Ensure gender is provided if required
       if (!gender) {
         throw new BadRequestException('Please select a gender');
       }
@@ -171,59 +151,6 @@ export class AuthService {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  // async userLogin(username: string, password: string): Promise<{ user: User | Admin; role: string }> {
-  //   try {
-  //     // Handle admin login
-  //     if (username === this.predefineUsername) {
-  //       const admin = await this.adminRepository.findOne({
-  //         where: { username: this.predefineUsername },
-  //       });
-  
-  //       if (!admin) {
-  //         throw new UnauthorizedException('Admin user does not exist');
-  //       }
-  
-  //       // Compare the password
-  //       const isPasswordValid = password === this.predefineAdminPassword;
-  //       if (!isPasswordValid) {
-  //         throw new UnauthorizedException('Invalid username or password');
-  //       }
-  
-  //       return { user: admin, role: 'admin' }; // Role should be 'admin'
-  //     }
-  
-  //     // Handle regular user login
-  //     const user = await this.userRepository.findOne({
-  //       where: { username }
-  //     });
-  
-  //     if (!user) {
-  //       throw new UnauthorizedException('Invalid username or password');
-  //     }
-  
-  //     // if (user.blocked) {
-  //     //   throw new UnauthorizedException('User is blocked');
-  //     // }
-  
-  //     if (user.blocked) {
-  //       throw new HttpException(
-  //         { message: 'User is blocked' }, // Custom message field
-  //         HttpStatus.UNAUTHORIZED
-  //       );
-  //     }
-  //     const isPasswordValid = await user.comparePassword(password);
-  
-  //     if (!isPasswordValid) {
-  //       throw new UnauthorizedException('Invalid username or password');
-  //     }
-
-  //     return { user, role: 'user' };
-  //   } catch (error) {
-  //    this.logger.error('Error during login:', error.message);
-  //     throw new UnauthorizedException(error.message);
-  //   }
-  // }
-
   async userLogin(
     username: string,
     password: string
@@ -245,7 +172,7 @@ export class AuthService {
           throw new UnauthorizedException('Invalid username or password');
         }
   
-        return { user: admin, role: 'admin' }; // Role should be 'admin'
+        return { user: admin, role: 'admin' };
       }
   
       // Handle regular user login
@@ -259,7 +186,7 @@ export class AuthService {
   
       if (user.blocked) {
         throw new HttpException(
-          { message: 'User is blocked' }, // Custom message field
+          { message: 'User is blocked' },
           HttpStatus.UNAUTHORIZED
         );
       }
@@ -270,7 +197,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid username or password');
       }
   
-      return { user, role: 'user' }; // Role should be 'user' for regular users
+      return { user, role: 'user' };
     } catch (error) {
       this.logger.error('Error during login:', error.message);
       throw new UnauthorizedException(error.message);
@@ -281,7 +208,6 @@ export class AuthService {
     try {
       const decodedToken = this.jwtService.verify(accessToken);
       const userId = decodedToken.userId;
-      // Perform logout logic (maybe invalidate token here, if needed)
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         throw new UnauthorizedException('Token has expired');
@@ -311,7 +237,7 @@ export class AuthService {
         html: `<p>Hello ${user.username},</p>
              <p>Your password reset code is:</p>
              <p><strong>${resetCode}</strong></p>`,
-        //     from: '"thltechnologies" <no-reply@thltechserveur.com>',
+        //     from: '"vital" <no-reply@vitalserveur.com>',
       });
     } catch (error) {
      this.logger.error('Error sending email:', error);
