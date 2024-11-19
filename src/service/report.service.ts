@@ -61,7 +61,7 @@ export class ReportService {
             user: { id: reportedUser.id }
         });
 
-        console.log('report data', report)
+       // console.log('report data', report)
         await this.reportRepository.save(report);
 
         // Count the total number of reports for the reported user
