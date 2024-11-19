@@ -6,7 +6,7 @@ config();
 export const jwtConfig = {
   secret:
     process.env.JWT_SECRET ||
-    '98b00ed2c4f2b3ad8d5e34428552e1d70e78e0d8845ef7ce5262a3858d5e9cb825b858a981b949ffb762b81ae9c15760378eb1f5c92408bf19cae42ef549fff6',
+    '40d6d29df5c74a8424a0e0a58b9e8ad5f9537c91d4182a8dedf6f2f33bcba7bf26e5c4251ad5095858868233dbc3416cc6713aaacb5f41389efb8e0c23c3b951',
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || uuidv4(),
   expiresIn: '15m',
   refreshTokenExpiresIn: '1d',
