@@ -97,7 +97,9 @@ export class UserService {
     }
 
     async getAllUser(): Promise<User[]> {
-        return await this.userRepository.find()
+        return await this.userRepository.find({
+          //  relations:['reports']
+        })
     }
 
     async requestAccountDeletion(userId: number): Promise<User> {

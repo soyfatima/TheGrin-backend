@@ -19,40 +19,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-
   async validate(payload: any) {
-    console.log('Decoded JWT Payload:', JSON.stringify(payload, null, 2)); // Log the entire payload
+//    console.log('Decoded JWT Payload:', JSON.stringify(payload, null, 2)); 
     if (!payload.userId || !payload.role) {
       this.logger.error('Invalid payload: userId or role is missing');
       throw new UnauthorizedException('Invalid token payload');
     }
-    this.logger.log(`UserId: ${payload.userId}, Role: ${payload.role}`);
+    //this.logger.log(`UserId: ${payload.userId}, Role: ${payload.role}`);
     return { userId: payload.userId, role: payload.role };
   }
   
 
-
-
-
-
-
-//   async validate(payload: any) {
-//     if (!payload.userId || !payload.role) {
-//         this.logger.error('Invalid payload: userId or role is missing');
-//         throw new UnauthorizedException('Invalid token payload');
-//     }
-
-//     // Return the user data
-//     return { userId: payload.userId, role: payload.role };
-// }
- 
-  // async validate(payload: any) {
-  //   console.log('Decoded JWT Payload:', payload);
-  //   return { userId: payload.userId, role: payload.role };
-    
-  // }
-  
-   // async validate(payload: any) {
-  //   return { userId: payload.userId };
-  // }
 }
