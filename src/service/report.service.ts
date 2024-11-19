@@ -67,7 +67,7 @@ export class ReportService {
         // Count the total number of reports for the reported user
         const reportCount = await this.reportRepository.count({ where: { user: { id: reportedUser.id } } });
 
-        if (reportCount > 2) {
+        if (reportCount > 4) {
             await this.userRepository.update(reportedUser.id, {
                 blocked: true,
                 status: 'banned'
@@ -115,31 +115,7 @@ export class ReportService {
         });
 
         await this.reportRepository.save(report);
-
-        // Count how many reports exist for the user being reported (from the comment)
-        // const reportCount = await this.reportRepository.count({
-        //     where: { user: { id: reportedUser.id } }, // Count reports for the reported user
-        // });
-
         const reportCount = await this.reportRepository.count({ where: { comment: { id: commentId } } });
-
-        // if (reportCount > 4) {
-        //     // Block the user
-        //     // await this.userRepository.update(reportedUser.id, {
-        //     //     blocked: true,
-        //     //     status: 'banned',
-        //     // });
-
-        //     // Delete all related reports for the comment
-        //     await this.reportRepository.delete({ comment: { id: commentId } });
-        //     // Delete the comment itself
-        //     const deleteResult = await this.commentRepository.delete(commentId);
-
-        //     if (deleteResult.affected === 0) {
-        //         throw new NotFoundException(`Comment with ID ${commentId} could not be deleted or doesn't exist.`);
-        //     } else {
-        //     }
-        // }
 
         if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
@@ -191,16 +167,7 @@ export class ReportService {
 
         // Count the total number of reports for this reply
         const reportCount = await this.reportRepository.count({ where: { reply: { id: replyId } } });
-        // if (reportCount >= 4) {
-        //     await this.reportRepository.delete({ reply: { id: replyId } });
-        //     // Delete the reply itself
-        //     const deleteResult = await this.commentRepository.delete(replyId);
-        //     if (deleteResult.affected === 0) {
-        //         throw new NotFoundException(`Reply with ID ${replyId} could not be deleted or doesn't exist.`);
-        //     }
-        // }
-
-        if (reportCount >= 2) {
+        if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.commentRepository.delete(replyId);
 
@@ -246,17 +213,8 @@ export class ReportService {
         const reportCount = await this.reportRepository.count({
             where: { folder: { id: folderId } },
         });
-        // if (reportCount >= 4) {
-        //     await this.reportRepository.delete({ folder: { id: folderId } });
-        //     // Delete the folder
-        //     const deleteResult = await this.folderRepository.delete(folderId);
-        //     if (deleteResult.affected === 0) {
-        //         throw new NotFoundException(`Folder with ID ${folderId} could not be deleted or doesn't exist.`);
-        //     } else {
-        //     }
-        // }
 
-        if (reportCount >= 2) {
+        if (reportCount >= 4) {
             await this.incrementUserWarningCount(reportedUser.id);
             await this.folderRepository.delete(folderId);
             const folderName = folder.title; 
@@ -272,7 +230,7 @@ export class ReportService {
         if (!user) throw new NotFoundException('User not found');
         user.warningCount = (user.warningCount || 0) + 1;
 
-        if (user.warningCount >= 2) {
+        if (user.warningCount >= 8) {
             user.blocked = true;
             user.status = 'banned';
         }
